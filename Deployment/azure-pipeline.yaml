@@ -1,0 +1,64 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+parameters:
+- name: subscriptionId
+  displayName: The subscription id to deploy your resources to
+  type: string
+- name: resourceGroupName
+  displayName: The resource group name to deploy your resources to
+  type: string
+- name: location
+  displayName: The location your resources to
+  type: string
+- name: serviceConnectionName
+  displayName: The service connection name to use to deploy your resources
+  type: string
+
+jobs:
+- job: Deploy and Run
+  displayName: Deploy and run template
+  workspace:
+    clean: all
+  steps:
+  - task: AzureResourceManagerTemplateDeployment@3
+    name: DeployBicep
+    displayName: Deploy Bicep template
+    inputs:
+      deploymentScope: "Resource Group"
+      connectedServiceName: "${{ parameters.serviceConnectionName }}"
+      subscriptionId: "${{ parameters.subscriptionId }}"
+      action: "Create Or Update Resource Group"
+      deploymentMode: "Incremental"
+      resourceGroupName: "${{ parameters.resourceGroupName }}"
+      location: "${{ parameters.location }}"
+      templateLocation: "Linked artifact"
+      csmFile: "$(Build.SourcesDirectory)/IaC/aib.bicep"
+      csmParametersFile: "$(Build.SourcesDirectory)/IaC/aib.parameters.json"
+      deploymentOutputs: deploymentOutputs
+  # see https://github.com/microsoft/azure-pipelines-tasks/tree/master/Tasks/AzureResourceManagerTemplateDeploymentV3#deployment-outputs
+  - task: PowerShell@2
+    name: SetOutputs
+    displayName: Set Outputs from Bicep deployment
+    inputs:
+      pwsh: true
+      targetType: "inline"
+      script: |
+        $outputs = ConvertFrom-Json "$(DeployBicep.deploymentOutputs)"
+        Write-Host "##vso[task.setvariable variable=imageTemplateName;isReadOnly=true]$outputs.imageTemplateName.value"
+  - task: AzurePowerShell@5
+    name: RunTemplate
+    displayName: Run Image template
+    inputs:
+      pwsh: true
+      azureSubscription: "${{ parameters.serviceConnectionName }}"
+      azurePowerShellVersion: LatestVersion
+      scriptType: "filePath"
+      scriptPath: "$(Build.SourcesDirectory)/Deployment/Invoke-ImageTemplate.ps1"
+      scriptArguments:
+        -ImageTemplateName "$(imageTemplateName)" `
+        -ResourceGroupName "${{ parameters.resourceGroupName }}" `
+      informationPreference: "continue"
+      errorActionPreference: "stop"
