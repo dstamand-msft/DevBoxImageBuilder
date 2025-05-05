@@ -18,6 +18,6 @@ $location = Get-AzLocation | Select-Object displayname | Out-GridView -PassThru 
 $publisher = Get-AzVMImagePublisher -Location $location.DisplayName | Out-GridView -PassThru -Title "Choose a publisher"
 $offer = Get-AzVMImageOffer -Location $location.DisplayName -PublisherName $publisher.PublisherName | Out-GridView -PassThru -Title "Choose an offer"
 $title = "VM SKUs for {0} {1} {2}" -f $location.DisplayName, $publisher.PublisherName, $offer.Offer
-$sku = Get-AzVMImageSku -Location $location.DisplayName -PublisherName $publisher.PublisherName -Offer $offer.Offer | select SKUS | Out-GridView -Title $title -PassThru
+$sku = Get-AzVMImageSku -Location $location.DisplayName -PublisherName $publisher.PublisherName -Offer $offer.Offer | Select-Object SKUS | Out-GridView -Title $title -PassThru
 $imageReference = @{ publisher = $publisher.PublisherName; offer = $offer.Offer; sku = $sku.Skus; version = "latest" }
 $imageReference | ConvertTo-Json -Depth 4
