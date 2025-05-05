@@ -14,7 +14,7 @@ SOFTWARE
     AUTHOR: Dominique St-Amand
 #>
 
-$location = Get-AzLocation | select displayname | Out-GridView -PassThru -Title "Choose a location"
+$location = Get-AzLocation | Select-Object displayname | Out-GridView -PassThru -Title "Choose a location"
 $publisher = Get-AzVMImagePublisher -Location $location.DisplayName | Out-GridView -PassThru -Title "Choose a publisher"
 $offer = Get-AzVMImageOffer -Location $location.DisplayName -PublisherName $publisher.PublisherName | Out-GridView -PassThru -Title "Choose an offer"
 $title = "VM SKUs for {0} {1} {2}" -f $location.DisplayName, $publisher.PublisherName, $offer.Offer
