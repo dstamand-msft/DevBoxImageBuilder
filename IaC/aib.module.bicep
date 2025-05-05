@@ -134,32 +134,27 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
           3010
         ]
       }
-      // bug with the AIB Service and Packer. Fix to be expected mid august. Use image version "22631.3737.240611" for windows 11 23h along with the following customizer
-      {
-        type: 'PowerShell'
-        name: 'SetUUSFeatureOverride'
-        inline: [
-          '$uusKey = "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FeatureManagement\\Overrides\\4\\1931709068"'
-          'if (Test-Path $uusKey) {'
-          ' if ((Get-ItemProperty -Path $uusKey -Name \'EnabledState\').EnabledState -ne 1) {'
-          '   Set-ItemProperty -Path $uusKey -Name \'EnabledState\' -Value 1 -Force'
-          '   Write-Output "UUS Feature override (1931709068) EnabledState changed to 1"'
-          ' }'
-          '}'
-        ]
-        runAsSystem: true
-        runElevated: true
-      }
+      // example on how to filter the updates to be installed
+      // {
+      //   type: 'WindowsUpdate'
+      //   name: 'Install all available updates excluding preview updates'
+      //   searchCriteria: 'IsInstalled=0'
+      //   filters: [
+      //     'exclude:$_.Title -like \'*Preview*\' -or $_.Title -like \'*KB5040442*\''
+      //     'include:$true'
+      //   ]
+      //   updateLimit: 20
+      // }
       {
         type: 'WindowsUpdate'
         name: 'Install all available updates excluding preview updates'
         searchCriteria: 'IsInstalled=0'
         filters: [
-          'exclude:$_.Title -like \'*Preview*\' -or $_.Title -like \'*KB5040442*\''
+          'exclude:$_.Title -like \'*Preview*\''
           'include:$true'
         ]
         updateLimit: 20
-      }
+      }      
       {
         type: 'PowerShell'
         name: 'Remove artifacts and temporary files'
@@ -168,6 +163,20 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
           'Remove-Item -Path "C:\\temp" -Recurse -Force'
         ]
       }
+      {
+        type: 'PowerShell'
+        name: 'Run VM customization before sysprep script'
+        inline: [
+          '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+        ]
+        runElevated: true
+        runAsSystem: true
+        validExitCodes: [
+          0
+          // represents that a reboot is necessary
+          3010
+        ]
+      }      
     ]
     distribute: [
       {
