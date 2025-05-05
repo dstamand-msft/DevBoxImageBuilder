@@ -36,12 +36,8 @@ param scriptContainerName string
 @description('The resource identifier of the gallery image where the image will be stored.')
 param galleryImageId string
 
-@description('The regions where the image will be replicated. Defaults to francecentral, westindia and eastus.')
-param imageReplicationRegions array = [
-  'francecentral'
-  'westindia'
-  'eastus'
-]
+@description('(Optional) The regions where the image will be replicated. The regions should exclude the region where the shared imaged gallery is deployed.')
+param imageReplicationRegions array = []
 
 @description('The subscription id where the managed identity of the provisioning VM will connect to.')
 param subscriptionId string
@@ -52,17 +48,20 @@ param storageAccountName string
 @description('The path to the artifacts metadata file in the storage account.')
 param artifactsMetadataPath string
 
-@description('The name of the key vault where the secrets are stored.')
-param keyVaultName string
+@description('(Optional) The name of the key vault where the secrets are stored.')
+param keyVaultName string = ''
 
-@description('The secret names to be fetch from the keyvault and passed to the entrypoint script.')
-param secretNames array
+@description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
+param secretNames array = []
 
-@description('The tags to be associated with the image template.')
+@description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 
-@description('The tags to be associated with the image that will be created by the image template.')
+@description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
+
+var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames) ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose' : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
+var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames) ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose' : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
 resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14' = {
   name: imageTemplateName
@@ -124,7 +123,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
         type: 'PowerShell'
         name: 'Run VM customization script'
         inline: [
-          '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+          entryPointInlineScript
         ]
         runElevated: true
         runAsSystem: true
@@ -154,20 +153,12 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
           'include:$true'
         ]
         updateLimit: 20
-      }      
-      {
-        type: 'PowerShell'
-        name: 'Remove artifacts and temporary files'
-        inline: [
-          'Remove-Item -Path "C:\\installers" -Recurse -Force'
-          'Remove-Item -Path "C:\\temp" -Recurse -Force'
-        ]
       }
       {
         type: 'PowerShell'
         name: 'Run VM customization before sysprep script'
         inline: [
-          '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+          exitPointInlineScript
         ]
         runElevated: true
         runAsSystem: true
@@ -176,7 +167,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
           // represents that a reboot is necessary
           3010
         ]
-      }      
+      }
     ]
     distribute: [
       {

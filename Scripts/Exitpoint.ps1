@@ -16,11 +16,11 @@ SOFTWARE
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true, HelpMessage = "The subscription where to connect to")]
+    [Parameter(Mandatory = $true, HelpMessage = "The subscription where to connect to. It is required for customization scripts that need to connect to Azure resources, in case you need to use Azure CmdLets.")]
     [string]$SubscriptionId,    
-    [Parameter(Mandatory = $true, HelpMessage = "The name of the key vault where the secrets are stored")]
+    [Parameter(HelpMessage = "(Optional) The name of the key vault where the secrets are stored")]
     [string]$KeyVaultName,
-    [Parameter(Mandatory = $true,HelpMessage = "The secret names to pass to the customization scripts")]
+    [Parameter(HelpMessage = "(Optional) The secret names to pass to the customization scripts")]
     [Array]$SecretNames
 )
 
@@ -32,5 +32,8 @@ Write-Verbose "Executing the customizations"
     # example:
     # & 'C:\installers\artifacts\customization-scripts\ScriptA.ps1' -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
 # add any customizations here that should be ran regardless of the image type
+
+Remove-Item -Path "C:\installers" -Recurse -Force
+Remove-Item -Path "C:\temp" -Recurse -Force
 
 Write-Information "Customization completed successfully."

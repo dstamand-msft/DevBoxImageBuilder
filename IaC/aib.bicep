@@ -53,21 +53,10 @@ param imageSource object
 param vmSkuSize string = 'Standard_D4s_v3'
 
 @description('Maximum duration to wait, in minutes, while building the image template (includes all customizations, validations, and distributions). Specify 0 to use the default in the Azure platform (4 hours). Defaults to 6 hours if not specified')
-param buildTimeoutInMinutes int = 120
+param buildTimeoutInMinutes int = 300
 
-@description('The regions where the image will be replicated. Defaults to francecentral, westindia and eastus.')
-param imageReplicationRegions array = [
-  'francecentral'
-  'westindia'
-  'eastus'
-]
-
-@description('The type of image to be created. Allowed values: Base, RemoteApp.')
-@allowed([
-  'Base'
-  'RemoteApp'
-])
-param imageType string
+@description('(Optional) The regions where the image will be replicated. The regions should exclude the region where the shared imaged gallery is deployed.')
+param imageReplicationRegions array = []
 
 @description('The subscription id where the managed identity of the provisioning VM will connect to.')
 param subscriptionId string
@@ -75,10 +64,10 @@ param subscriptionId string
 @description('The path to the artifacts metadata file in the storage account.')
 param artifactsMetadataPath string
 
-@description('The tags to be associated with the image template.')
+@description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 
-@description('The tags to be associated with the image that will be created by the image template.')
+@description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
@@ -106,11 +95,11 @@ resource galleryImage 'Microsoft.Compute/galleries/images@2022-03-03' existing =
   parent: gallery
 }
 
-@description('The name of the key vault where the secrets are stored.')
-param keyVaultName string
+@description('(Optional) The name of the key vault where the secrets are stored.')
+param keyVaultName string = ''
 
-@description('The secret names to be fetch from the keyvault and passed to the entrypoint script.')
-param secretNames array
+@description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
+param secretNames array = []
 
 module imageTemplate 'aib.module.bicep' = {
   name: imageTemplateName
