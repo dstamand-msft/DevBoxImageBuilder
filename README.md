@@ -52,6 +52,14 @@ For instance, if you would want to convert the Dev Box image `microsoftwindowsde
 }
 ```
 
+## Customizers tweaks
+
+You may want to add the `sha256Checksum` property to the customizers in `aib.module.bicep` to make sure that your scripts aren't tempered with. To get the hash, you can use the following PowerShell CmdLet:
+
+```powershell
+(Get-FileHash -Path .\Scripts\DownloadArtifacts.ps1 -Algorithm Sha256).Hash
+```
+
 ## Deployment
 
 You can deploy this solution using 3 ways:
