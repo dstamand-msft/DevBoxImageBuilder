@@ -15,6 +15,9 @@ param buildTimeoutInMinutes int = 600
 @description('	Size of the virtual machine used to build, customize and capture images.')
 param vmSkuSize string = 'Standard_D4s_v3'
 
+@description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
+param subnetId string = ''
+
 @description('The resource identifier of the user assigned identity for the Image builder VM, the user assigned identity for Azure Image Builder must have the "Managed Identity Operator" role assignment on all the user assigned identities for Azure Image Builder to be able to associate them to the build VM.')
 param imageBuilderVMUserAssignedIdentityId string
 
@@ -63,7 +66,7 @@ param imageTags object = {}
 var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames) ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose' : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames) ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose' : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
-resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14' = {
+resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01' = {
   name: imageTemplateName
   location: location
   tags: tags
@@ -89,6 +92,9 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2022-02-14
       userAssignedIdentities: [
         imageBuilderVMUserAssignedIdentityId
       ]
+      vnetConfig: {
+        subnetId: !empty(subnetId) ? subnetId : ''
+      }
     }
     source: imageSource
     customize: [

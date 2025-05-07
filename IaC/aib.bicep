@@ -52,6 +52,9 @@ param imageSource object
 @description('	Size of the virtual machine used to build, customize and capture images.')
 param vmSkuSize string = 'Standard_D4s_v3'
 
+@description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
+param subnetId string = ''
+
 @description('Maximum duration to wait, in minutes, while building the image template (includes all customizations, validations, and distributions). Specify 0 to use the default in the Azure platform (4 hours). Defaults to 6 hours if not specified')
 param buildTimeoutInMinutes int = 300
 
@@ -112,6 +115,7 @@ module imageTemplate 'aib.module.bicep' = {
     imageBuilderVMUserAssignedIdentityId: vmImgBuilderIdentity.id
     imageSource: imageSource
     vmSkuSize: vmSkuSize
+    subnetId: subnetId
     buildTimeoutInMinutes: buildTimeoutInMinutes
     storageAccountBlobEndpoint: storageAccount.properties.primaryEndpoints.blob
     galleryImageId: galleryImage.id
