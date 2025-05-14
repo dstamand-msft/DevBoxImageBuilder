@@ -20,7 +20,7 @@ param galleryResourceGroupName string
 param galleryName string
 
 @description('The name of the image definition')
-param imageGalleryName string
+param imageDefinitionName string
 
 @description('The name of the image template')
 param imageTemplateName string
@@ -94,7 +94,7 @@ resource gallery 'Microsoft.Compute/galleries@2022-08-03' existing = {
 }
 
 resource galleryImage 'Microsoft.Compute/galleries/images@2022-03-03' existing = {
-  name: imageGalleryName
+  name: imageDefinitionName
   parent: gallery
 }
 
