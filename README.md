@@ -13,7 +13,20 @@
      - Microsoft.Network/virtualNetworks/read
      - Microsoft.Network/virtualNetworks/subnets/join/action
   - Disable the Private Service Policy on the subnet. See the [documentation](https://learn.microsoft.com/en-us/azure/private-link/disable-private-link-service-network-policy?tabs=private-link-network-policy-powershell) for more information.
-- The proper [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#allow-vm-image-builder-to-distribute-images) to distribute images on the compute gallery (formally known as Shared Image Gallery (SIG)) 
+    ```powershell
+    $subnet = 'default'
+
+    $net = @{
+        Name = 'myVnet'
+        ResourceGroupName = 'myResourceGroup'
+    }
+    $vnet = Get-AzVirtualNetwork @net
+
+    ($vnet | Select -ExpandProperty subnets | Where-Object {$_.Name -eq $subnet}).privateLinkServiceNetworkPolicies = "Disabled"
+
+    $vnet | Set-AzVirtualNetwork
+    ```
+- The proper [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#allow-vm-image-builder-to-distribute-images) to distribute images on the compute gallery (formally known as Shared Image Gallery (SIG))
 
 ## Determining the images
 
