@@ -30,6 +30,9 @@ param imageBuilderVMUserAssignedIdentityId string
 // version: 'latest'
 param imageSource object
 
+@description('(Optional) The staging resource group id in the same subscription as the image template that will be used to build the image. If this field is empty, a resource group with a random name will be created. If the resource group specified in this field doesn\'t exist, it will be created with the same name. If the resource group specified exists, it must be empty and in the same region as the image template. The resource group created will be deleted during template deletion if this field is empty or the resource group specified doesn\'t exist, but if the resource group specified exists the resources created in the resource group will be deleted during template deletion and the resource group itself will remain.')
+param stagingResourceGroup string = ''
+
 @description('The blob endpoint of the storage account that holds the scripts to be provisioned on the VM')
 param storageAccountBlobEndpoint string
 
@@ -96,6 +99,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         subnetId: !empty(subnetId) ? subnetId : ''
       }
     }
+    stagingResourceGroup: !empty(stagingResourceGroup) ? stagingResourceGroup : ''
     source: imageSource
     customize: [
       {

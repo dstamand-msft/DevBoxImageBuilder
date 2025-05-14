@@ -55,6 +55,9 @@ param vmSkuSize string = 'Standard_D4s_v3'
 @description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
 param subnetId string = ''
 
+@description('(Optional) The staging resource group id in the same subscription as the image template that will be used to build the image. If this field is empty, a resource group with a random name will be created. If the resource group specified in this field doesn\'t exist, it will be created with the same name. If the resource group specified exists, it must be empty and in the same region as the image template. The resource group created will be deleted during template deletion if this field is empty or the resource group specified doesn\'t exist, but if the resource group specified exists the resources created in the resource group will be deleted during template deletion and the resource group itself will remain.')
+param stagingResourceGroup string = ''
+
 @description('Maximum duration to wait, in minutes, while building the image template (includes all customizations, validations, and distributions). Specify 0 to use the default in the Azure platform (4 hours). Defaults to 6 hours if not specified')
 param buildTimeoutInMinutes int = 300
 
@@ -116,6 +119,7 @@ module imageTemplate 'aib.module.bicep' = {
     imageSource: imageSource
     vmSkuSize: vmSkuSize
     subnetId: subnetId
+    stagingResourceGroup: stagingResourceGroup
     buildTimeoutInMinutes: buildTimeoutInMinutes
     storageAccountBlobEndpoint: storageAccount.properties.primaryEndpoints.blob
     galleryImageId: galleryImage.id

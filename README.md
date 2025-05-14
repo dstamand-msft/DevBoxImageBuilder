@@ -4,6 +4,11 @@
 
 ![Architecture](Architecture.png "Architecture")
 
+## Pre-requesites
+
+- You need to have the resource provider `Microsoft.VirtualMachineImages` on the subscription enabled
+- Bicep to deploy the resources
+
 ## Determining the images
 
 Dev Box requires images. For ease of use, you can start with the base images that are available within dev box.<br/>
