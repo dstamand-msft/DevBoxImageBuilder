@@ -8,6 +8,12 @@
 
 - You need to have the resource provider `Microsoft.VirtualMachineImages` on the subscription enabled
 - Bicep to deploy the resources
+- If you are providing a subnet:
+  - please make sure the user managed identity of the image builder has the following [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#permission-to-customize-images-on-your-virtual-networks) for the vnet:
+     - Microsoft.Network/virtualNetworks/read
+     - Microsoft.Network/virtualNetworks/subnets/join/action
+  - Disable the Private Service Policy on the subnet. See the [documentation](https://learn.microsoft.com/en-us/azure/private-link/disable-private-link-service-network-policy?tabs=private-link-network-policy-powershell) for more information.
+- The proper [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#allow-vm-image-builder-to-distribute-images) to distribute images on the compute gallery (formally known as Shared Image Gallery (SIG)) 
 
 ## Determining the images
 
