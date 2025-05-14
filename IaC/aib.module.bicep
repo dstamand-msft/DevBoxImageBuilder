@@ -112,6 +112,12 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
       }
       {
         type: 'File'
+        name: 'Download the exitpoint script'
+        destination: 'C:\\installers\\Exitpoint.ps1'
+        sourceUri: '${storageAccountBlobEndpoint}${scriptContainerName}/Exitpoint.ps1'
+      }
+      {
+        type: 'File'
         // see https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=json%2Cazure-powershell#generalize for more information
         // remove this customizer the moment the default sysprep command is fixed on the Azure platform in the Azure Image Builder service
         name: 'Override the built-in deprovisioning script as WindowsAzureTelemetryAgent was removed and combined into WindowsAzureGuestAgent'
@@ -120,7 +126,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
       }
       {
         type: 'PowerShell'
-        name: 'Run the download artifacts script'
+        name: 'Run the download artifacts script (entry)'
         inline: [
           '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
         ]
@@ -159,6 +165,20 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
           'include:$true'
         ]
         updateLimit: 20
+      }
+      {
+        type: 'PowerShell'
+        name: 'Run VM customization script (exit)'
+        inline: [
+          exitPointInlineScript
+        ]
+        runElevated: true
+        runAsSystem: true
+        validExitCodes: [
+          0
+          // represents that a reboot is necessary
+          3010
+        ]
       }
       {
         type: 'PowerShell'
