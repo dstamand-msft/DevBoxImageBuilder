@@ -24,14 +24,20 @@ param imageBuilderVMUserAssignedIdentityId string
 @description('The source of the image to be used to create the image template. see https://learn.microsoft.com/en-us/azure/templates/microsoft.virtualmachineimages/imagetemplates?pivots=deployment-language-bicep#imagetemplatesource-objects for more information.')
 // example:
 // type: 'PlatformImage'
-// publisher: 'MicrosoftBizTalkServer'
-// offer: 'BizTalk-Server'
-// sku: '2020-Standard'
+// publisher: 'MicrosoftWindowsDesktop'
+// offer: 'windows-ent-cpc'
+// sku: 'win11-24h2-ent-cpc'
 // version: 'latest'
 param imageSource object
 
-@description('(Optional) The staging resource group id in the same subscription as the image template that will be used to build the image. If this field is empty, a resource group with a random name will be created. If the resource group specified in this field doesn\'t exist, it will be created with the same name. If the resource group specified exists, it must be empty and in the same region as the image template. The resource group created will be deleted during template deletion if this field is empty or the resource group specified doesn\'t exist, but if the resource group specified exists the resources created in the resource group will be deleted during template deletion and the resource group itself will remain.')
-param stagingResourceGroup string = ''
+@description('(Optional) The staging resource group id (/subscriptions/\\<subscriptionID>/resourceGroups/\\<stagingResourceGroupName\\>) in the same subscription as the image template that will be used to build the image. If this field is empty, a resource group with a random name will be created. If the resource group specified in this field doesn\'t exist, it will be created with the same name. If the resource group specified exists, it must be empty and in the same region as the image template. The resource group created will be deleted during template deletion if this field is empty or the resource group specified doesn\'t exist, but if the resource group specified exists the resources created in the resource group will be deleted during template deletion and the resource group itself will remain. The user identity deploying the template needs to have Owner role assignment to this resource group.')
+param stagingResourceGroupId string = ''
+
+@description('Specifies the action to take when an error occurs during the customizer phase of image creation')
+param onCustomizerError string = 'abort'
+
+@description('Specifies the action to take when an error occurs during validation of the image template')
+param onValidationError string = 'cleanup'
 
 @description('The blob endpoint of the storage account that holds the scripts to be provisioned on the VM')
 param storageAccountBlobEndpoint string
@@ -66,8 +72,12 @@ param tags object = {}
 @description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
-var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames) ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose' : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
-var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames) ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose' : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
+var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
+  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+  : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
+var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
+  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+  : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
 resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01' = {
   name: imageTemplateName
@@ -99,7 +109,18 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         subnetId: !empty(subnetId) ? subnetId : ''
       }
     }
-    stagingResourceGroup: !empty(stagingResourceGroup) ? stagingResourceGroup : ''
+    stagingResourceGroup: !empty(stagingResourceGroupId) ? stagingResourceGroupId : ''
+    // possible values: 'abort', 'cleanup'
+    // cleanup: Ensures that temporary resources created by Packer are cleaned up even if Packer or one of the customizations/validations encounters an error.
+    //          This maintains backwards compatibility with existing behavior.
+    // abort: In case Packer encounters an error, the Azure Image Builder (AIB) service skips the clean up of temporary resources. 
+    //        As the owner of the AIB template, you are responsible for cleaning up these resources from your subscription.
+    //        These resources may contain useful information such as logs and files left behind in a temporary VM, which can aid in investigating the error 
+    //        encountered by Packer.
+    errorHandling: {
+      onCustomizerError: onCustomizerError
+      onValidationError: onValidationError
+    }
     source: imageSource
     customize: [
       {
