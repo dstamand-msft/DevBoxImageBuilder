@@ -53,7 +53,7 @@
     "subnetId": {
       "value": "<value>"
     },
-    "stagingResourceGroup":{
+    "stagingResourceGroupId":{
       "value": "<value>"
     },
     "subscriptionId": {
