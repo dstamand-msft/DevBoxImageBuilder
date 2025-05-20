@@ -27,7 +27,7 @@
     $vnet | Set-AzVirtualNetwork
     ```
 - The proper [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#allow-vm-image-builder-to-distribute-images) to distribute images on the compute gallery (formally known as Shared Image Gallery (SIG))
-- [Managed Identity Operator[(https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/identity#managed-identity-operator)] (or RBAC permission `Microsoft.ManagedIdentity/userAssignedIdentities/assign/action`) on the build user managed identity assigned to the Azure Image Builder identity to be able to associate them to the build VM. See the [documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=json%2Cazure-powershell#user-assigned-identity-for-the-image-builder-build-vm) for more information.
+- [Managed Identity Operator](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/identity#managed-identity-operator) (or RBAC permission `Microsoft.ManagedIdentity/userAssignedIdentities/assign/action`) on the Build VM User Managed Identity assigned to the Azure Image Builder identity to be able to associate it to the build VM. See the [documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=json%2Cazure-powershell#user-assigned-identity-for-the-image-builder-build-vm) for more information.
 
 ## Determining the images
 
