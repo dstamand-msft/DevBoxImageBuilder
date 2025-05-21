@@ -6,8 +6,8 @@
 
 ## Pre-requesites
 
-- You need to have the resource provider `Microsoft.VirtualMachineImages` on the subscription enabled
-- Bicep to deploy the resources
+- You need to have the resources provider `Microsoft.VirtualMachineImages` and `Microsoft.ContainerInstance` on the subscription enabled
+- [Bicep](https://github.com/Azure/bicep/releases) to deploy the resources
 - If you are providing a subnet:
   - please make sure the user managed identity of the image builder has the following [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#permission-to-customize-images-on-your-virtual-networks) for the vnet:
      - Microsoft.Network/virtualNetworks/read
@@ -95,3 +95,7 @@ You can deploy this solution using 3 ways:
 ## Debugging
 
 The logs are located in the storage account in the staging resource group, under the blob container `packerlogs`. you can download the log file to view the process. While not exactly meant for this, you can also use a tool like [CMTrace](https://www.microsoft.com/en-us/evalcenter/download-microsoft-endpoint-configuration-manager) to view the log in an easier fashion. Just run executable and it will unzip itself. Once you see the files within you simply go to `SMSSETUP\Tools` and you will find the tool there.
+
+## Customization examples
+
+See the Scripts/Examples folder

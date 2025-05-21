@@ -41,23 +41,23 @@ while ($true) {
     $output = Get-AzImageBuilderTemplate -Name $ImageTemplateName -ResourceGroupName $ResourceGroupName | Select-Object -Property Name, LastRunStatusRunState, LastRunStatusRunSubState, LastRunStatusMessage
     if ($output.LastRunStatusRunState -eq "Succeeded") {
         if ($KeepImageBuilderTemplate) {
-            Write-Output "Image template has succeeded. Keeping the image template..."
+            Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template has succeeded. Keeping the image template..."
         }
         else {
-            Write-Output "Image template has succeeded. Removing the image template..."
+            Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template has succeeded. Removing the image template..."
             Remove-AzImageBuilderTemplate -Name $ImageTemplateName -ResourceGroupName $ResourceGroupName | Out-Null
         }
         break
     }
     elseif ($output.LastRunStatusRunState -eq "Failed") {
-        Write-Error "Image template has failed. Message: $($output.LastRunStatusMessage)"
+        Write-Error "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template has failed. Message: $($output.LastRunStatusMessage)"
         throw "Image template has failed. Message: $($output.LastRunStatusMessage)"
     }
     elseif ($output.LastRunStatusRunState -eq "Canceled") {
-        Write-Error "Image template has been canceled."
+        Write-Error "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template has been canceled."
         throw "Image template has been canceled."
     }
     
-    Write-Output "Image template is still running with status: '$($output.LastRunStatusRunState) - $($output.LastRunStatusRunSubState)'. Sleeping for 5 minutes..."
+    Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template is still running with status: '$($output.LastRunStatusRunState)$(![string]::IsNullOrEmpty($output.LastRunStatusRunSubState) ? " - $($output.LastRunStatusRunSubState)" : '')'. Sleeping for 5 minutes..."
     Start-Sleep -Seconds 300
 }
