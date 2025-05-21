@@ -86,7 +86,7 @@ Start-ProcessForInstall -InstallerPath $installer -ArgumentList "/VERYSILENT /NO
 $dockerDesktopInstaller = Join-Path $artifactsPath "apps\Docker\DockerDesktopInstaller-v4.41.2.191736.exe"
 $dockerProductVersion = (Get-Item $dockerDesktopInstaller).VersionInfo.ProductVersion
 Write-Verbose "[Entrypoint] Install Docker Desktop (version $dockerProductVersion)"
-Start-Process $dockerDesktopInstaller -ArgumentList "install", "--accept-license" -Wait
+Start-Process $dockerDesktopInstaller -ArgumentList "install", "--accept-license", "--quiet", "--always-run-service" -Wait
 
 [Environment]::SetEnvironmentVariable(
     "Path",
