@@ -32,7 +32,7 @@ param storageAccountResourceGroupName string
 param storageAccountName string
 
 @description('The container in the storage account that holds the scripts to be provisioned on the VM')
-param scriptContainerName string
+param scriptsContainerName string
 
 @description('The name of the resource group that contains the user assigned identity for the Image builder VM, the user assigned identity for Azure Image Builder must have the "Managed Identity Operator" role assignment on all the user assigned identities for Azure Image Builder to be able to associate them to the build VM.')
 param imageBuilderVMUserAssignedIdentityResourceGroupName string
@@ -121,7 +121,7 @@ module imageTemplate 'aib.module.bicep' = {
   params: {
     location: location
     imageTemplateName: imageTemplateName
-    scriptContainerName: scriptContainerName
+    scriptsContainerName: scriptsContainerName
     userImgBuilderIdentityId: userImgBuilderIdentity.id
     imageBuilderVMUserAssignedIdentityId: vmImgBuilderIdentity.id
     imageBuilderVMUserAssignedIdentityClientId: vmImgBuilderIdentity.properties.clientId

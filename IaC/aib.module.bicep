@@ -46,7 +46,7 @@ param onValidationError string = 'cleanup'
 param storageAccountBlobEndpoint string
 
 @description('The container in the storage account that holds the scripts to be provisioned on the VM')
-param scriptContainerName string
+param scriptsContainerName string
 
 @description('The resource identifier of the gallery image where the image will be stored.')
 param galleryImageId string
@@ -116,9 +116,9 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
     // possible values: 'abort', 'cleanup'
     // cleanup: Ensures that temporary resources created by Packer are cleaned up even if Packer or one of the customizations/validations encounters an error.
     //          This maintains backwards compatibility with existing behavior.
-    // abort: In case Packer encounters an error, the Azure Image Builder (AIB) service skips the clean up of temporary resources. 
+    // abort: In case Packer encounters an error, the Azure Image Builder (AIB) service skips the clean up of temporary resources.
     //        As the owner of the AIB template, you are responsible for cleaning up these resources from your subscription.
-    //        These resources may contain useful information such as logs and files left behind in a temporary VM, which can aid in investigating the error 
+    //        These resources may contain useful information such as logs and files left behind in a temporary VM, which can aid in investigating the error
     //        encountered by Packer.
     errorHandling: {
       onCustomizerError: onCustomizerError
@@ -130,19 +130,19 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         type: 'File'
         name: 'Download the download artifacts script'
         destination: 'C:\\installers\\DownloadArtifacts.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptContainerName}/DownloadArtifacts.ps1'
+        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/DownloadArtifacts.ps1'
       }
       {
         type: 'File'
         name: 'Download the entrypoint script'
         destination: 'C:\\installers\\Entrypoint.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptContainerName}/Entrypoint.ps1'
+        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/Entrypoint.ps1'
       }
       {
         type: 'File'
         name: 'Download the exitpoint script'
         destination: 'C:\\installers\\Exitpoint.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptContainerName}/Exitpoint.ps1'
+        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/Exitpoint.ps1'
       }
       {
         type: 'File'
@@ -150,7 +150,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         // remove this customizer the moment the default sysprep command is fixed on the Azure platform in the Azure Image Builder service
         name: 'Override the built-in deprovisioning script as WindowsAzureTelemetryAgent was removed and combined into WindowsAzureGuestAgent'
         destination: 'C:\\DeprovisioningScript.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptContainerName}/DeprovisioningScript.ps1'
+        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/DeprovisioningScript.ps1'
       }
       {
         type: 'PowerShell'
@@ -197,20 +197,6 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
       {
         type: 'PowerShell'
         name: 'Run VM customization script (exit)'
-        inline: [
-          exitPointInlineScript
-        ]
-        runElevated: true
-        runAsSystem: true
-        validExitCodes: [
-          0
-          // represents that a reboot is necessary
-          3010
-        ]
-      }
-      {
-        type: 'PowerShell'
-        name: 'Run VM customization before sysprep script'
         inline: [
           exitPointInlineScript
         ]
