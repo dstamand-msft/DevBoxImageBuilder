@@ -124,6 +124,7 @@ module imageTemplate 'aib.module.bicep' = {
     scriptContainerName: scriptContainerName
     userImgBuilderIdentityId: userImgBuilderIdentity.id
     imageBuilderVMUserAssignedIdentityId: vmImgBuilderIdentity.id
+    imageBuilderVMUserAssignedIdentityClientId: vmImgBuilderIdentity.properties.clientId
     imageSource: imageSource
     vmSkuSize: vmSkuSize
     subnetId: subnetId

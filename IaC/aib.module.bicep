@@ -18,8 +18,11 @@ param vmSkuSize string = 'Standard_D4s_v3'
 @description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
 param subnetId string = ''
 
-@description('The resource identifier of the user assigned identity for the Image builder VM, the user assigned identity for Azure Image Builder must have the "Managed Identity Operator" role assignment on all the user assigned identities for Azure Image Builder to be able to associate them to the build VM.')
+@description('The resource identifier of the user assigned identity for the Image builder VM. The user assigned identity for Azure Image Builder must have the "Managed Identity Operator" role assignment on all the user assigned identities for Azure Image Builder to be able to associate them to the build VM.')
 param imageBuilderVMUserAssignedIdentityId string
+
+@description('The client id of the user assigned identity for the Image builder VM')
+param imageBuilderVMUserAssignedIdentityClientId string
 
 @description('The source of the image to be used to create the image template. see https://learn.microsoft.com/en-us/azure/templates/microsoft.virtualmachineimages/imagetemplates?pivots=deployment-language-bicep#imagetemplatesource-objects for more information.')
 // example:
@@ -77,7 +80,7 @@ var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
   : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
   ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
-  : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
+  : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
 resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01' = {
   name: imageTemplateName
@@ -153,7 +156,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         type: 'PowerShell'
         name: 'Run the download artifacts script (entry)'
         inline: [
-          '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
+          '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -IdentityClientId ${imageBuilderVMUserAssignedIdentityClientId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
         ]
       }
       {

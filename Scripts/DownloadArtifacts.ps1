@@ -18,6 +18,8 @@ SOFTWARE
 param(
     [Parameter(Mandatory = $true, HelpMessage = "The subscription id which the Image Builder VM Managed Identity should connect to")]
     [string]$SubscriptionId,
+    [Parameter(Mandatory = $true, HelpMessage = "The client id of the image builder VM Managed Identity")]
+    [string]$IdentityClientId,        
     [Parameter(Mandatory = $true, HelpMessage = "The name of the storage account where the artifacts are located")]
     [string]$StorageAccountName,
     [Parameter(Mandatory = $true, HelpMessage = "The path to the file containing the list of artifacts to download. Should follow the convention of container/file.ext")]
@@ -44,8 +46,11 @@ if (Get-Module -Name Az.Accounts, Az.Storage -ListAvailable) {
 
 try
 {
+    # Ensures that any credentials apply only to the execution of this script
+    Disable-AzContextAutosave -Scope Process | Out-Null
+
     Write-Information "Logging in to Azure..."
-    Connect-AzAccount -Identity | Out-Null
+    Connect-AzAccount -Identity -AccountId $IdentityClientId | Out-Null
     Set-AzContext -Subscription $SubscriptionId | Out-Null
     Write-Information "Logged in to Azure..."
 }

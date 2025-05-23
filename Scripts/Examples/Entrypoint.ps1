@@ -25,6 +25,7 @@ param(
 )
 
 $InformationPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 Write-Verbose "[Entrypoint] Executing the customizations"
     # call your sub customization scripts here with arguments as necessary such as:
@@ -45,12 +46,15 @@ $bicepCLI = Join-Path $artifactsPath "apps\Bicep\Bicep-v0.35.1.exe"
 $bicepProductVersion = (Get-Item $bicepCLI).VersionInfo.ProductVersion
 Write-Verbose "[Entrypoint] Copying Bicep CLI (version $bicepProductVersion)"
 Copy-Item $bicepCLI -Destination (Join-Path $toolsPath "Bicep.exe") -Force
-Unblock-File -Path (Join-Path $toolsPath "Bicep.exe") -Force
+Unblock-File -Path (Join-Path $toolsPath "Bicep.exe")
 
 Write-Verbose "[Entrypoint] Install Git for Windows (latest version)"
 $git_url = "https://api.github.com/repos/git-for-windows/git/releases/latest"
 $gitItems = Invoke-RestMethod -Method Get -Uri $git_url
 $gitArtifact = $gitItems | Foreach-Object { $item = $_; $item.assets | Where-Object { $_.name -like "*64-bit.exe"} | Select-Object name, browser_download_url }
+if (!(Test-Path (Join-Path $artifactsPath "apps\git"))) {
+    New-Item -Path (Join-Path $artifactsPath "apps\git") -ItemType Directory -Force | Out-Null
+}
 $installer = Join-Path $artifactsPath "apps\git\$($gitArtifact.name)"
 Invoke-WebRequest -Uri $gitArtifact.browser_download_url -OutFile $installer
 
