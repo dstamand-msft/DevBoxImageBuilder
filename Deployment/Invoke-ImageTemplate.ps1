@@ -67,7 +67,7 @@ while ($true) {
     }
 
     Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template is still running with status: '$($output.LastRunStatusRunState)$(![string]::IsNullOrEmpty($output.LastRunStatusRunSubState) ? " - $($output.LastRunStatusRunSubState)" : '')'. Sleeping for $SleepTime seconds..."
-    if ($OutputLogs -and $canOutputLogs) {
+    if ($OutputLogs -and $canOutputLogs -and $output.LastRunStatusRunState -eq "Running" -and $output.LastRunStatusRunSubState -eq "Building") {
         if (![string]::IsNullOrEmpty($imageBuilderTemplate.StagingResourceGroup)) {
             $stagingResourceGroupName = $imageBuilderTemplate.StagingResourceGroup.Split("/")[-1]
             $containerInstanceGroup = Get-AzResource -ResourceGroupName $stagingResourceGroupName -ResourceType "Microsoft.ContainerInstance/containerGroups" -ErrorAction SilentlyContinue
