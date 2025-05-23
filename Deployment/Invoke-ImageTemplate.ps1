@@ -74,23 +74,23 @@ while ($true) {
             if ($null -eq $containerInstanceGroup) {
                 Write-Warning "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] No container instance group found in the staging resource group yet. Log output will not be available yet."
             }
+            else {
+                $containerInstanceGroupName = $containerInstanceGroup.Name
+                $containerInstanceGroup = Get-AzResource -ResourceGroupName $stagingResourceGroupName -ResourceType "Microsoft.ContainerInstance/containerGroups"
+                $logs = Get-AzContainerInstanceLog -ResourceGroupName $stagingResourceGroupName -ContainerGroupName $containerInstanceGroupName -ContainerName $containerName -ErrorAction SilentlyContinue
+                if ($null -ne $logs) {
+                    Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template logs:"
+                    Write-Output $logs
+                }
+                else {
+                    Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] No logs available yet."
+                }
+            }
         }
         else {
-            $containerInstanceGroupName = $containerInstanceGroup.Name
-            $containerInstanceGroup = Get-AzResource -ResourceGroupName $stagingResourceGroupName -ResourceType "Microsoft.ContainerInstance/containerGroups"
-            $logs = Get-AzContainerInstanceLog -ResourceGroupName $stagingResourceGroupName -ContainerGroupName $containerInstanceGroupName -ContainerName $containerName -ErrorAction SilentlyContinue
-            if (![string]::IsNullOrEmpty($logs)) {
-                Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template logs:"
-                Write-Output $logs
-            }
-            else {
-                Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] No logs available yet."
-            }
+            Write-Warning "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] No staging resource group found. Cannot output logs."
+            $canOutputLogs = $false
         }
-    }
-    else {
-        Write-Warning "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] No staging resource group found. Cannot output logs."
-        $canOutputLogs = $false
     }
 
     Start-Sleep -Seconds $SleepTime
