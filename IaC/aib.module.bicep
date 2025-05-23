@@ -154,14 +154,14 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
       }
       {
         type: 'PowerShell'
-        name: 'Run the download artifacts script (entry)'
+        name: 'Run the download artifacts script'
         inline: [
           '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -IdentityClientId ${imageBuilderVMUserAssignedIdentityClientId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
         ]
       }
       {
         type: 'PowerShell'
-        name: 'Run VM customization script'
+        name: 'Run VM customization script (entry)'
         inline: [
           entryPointInlineScript
         ]
