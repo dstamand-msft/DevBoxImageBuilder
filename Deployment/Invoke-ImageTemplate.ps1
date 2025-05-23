@@ -77,7 +77,7 @@ while ($true) {
             else {
                 $containerInstanceGroupName = $containerInstanceGroup.Name
                 $containerInstanceGroup = Get-AzResource -ResourceGroupName $stagingResourceGroupName -ResourceType "Microsoft.ContainerInstance/containerGroups"
-                $logs = Get-AzContainerInstanceLog -ResourceGroupName $stagingResourceGroupName -ContainerGroupName $containerInstanceGroupName -ContainerName $containerName -ErrorAction SilentlyContinue
+                $logs = Get-AzContainerInstanceLog -ResourceGroupName $stagingResourceGroupName -ContainerGroupName $containerInstanceGroupName -ContainerName $containerName -Tail 100 -ErrorAction SilentlyContinue
                 if ($null -ne $logs) {
                     Write-Output "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] Image template logs:"
                     Write-Output $logs
