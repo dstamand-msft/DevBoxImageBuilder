@@ -56,7 +56,7 @@ shutdown /l
 Write-Output ">>> Post-setup script created at: $scriptPath"
 
 Write-Output ">>> Scheduled task `"$taskName`" will run the script at user logon."
-$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptPath`""
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptPath`" -NonInteractive"
 $trigger = New-ScheduledTaskTrigger -AtLogOn
 $principal = New-ScheduledTaskPrincipal -GroupId "BUILTIN\Users" -RunLevel Highest
 
