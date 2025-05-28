@@ -31,6 +31,8 @@ param (
     [int]$SleepTime = 300
 )
 
+$ErrorActionPreference = "Stop"
+
 Write-Output "Running image template..."
 Invoke-AzResourceAction `
     -ResourceName $ImageTemplateName `

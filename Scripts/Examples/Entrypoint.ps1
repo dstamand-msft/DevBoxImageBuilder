@@ -88,6 +88,9 @@ EnableFSMonitor=Disabled
     Write-Verbose "[Entrypoint] Install Docker Desktop (version $dockerProductVersion)"
     Start-Process $dockerDesktopInstaller -ArgumentList "install", "--accept-license", "--quiet", "--always-run-service" -Wait
 
+    Write-Verbose "[Entrypoint] Install WSL"
+    Start-Process "wsl.exe" -ArgumentList "--install" -Wait
+
     [Environment]::SetEnvironmentVariable(
         "Path",
         [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine) + ";C:\Tools",
