@@ -4,7 +4,7 @@
 
 ![Architecture](Architecture.png "Architecture")
 
-## Pre-requesites
+## Prerequisites
 
 - You need to have the resources provider `Microsoft.VirtualMachineImages` and `Microsoft.ContainerInstance` on the subscription enabled
 - [Bicep](https://github.com/Azure/bicep/releases) to deploy the resources
