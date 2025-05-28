@@ -33,7 +33,14 @@ Write-Verbose "Executing the customizations"
     # & 'C:\installers\artifacts\customization-scripts\ScriptA.ps1' -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
 # add any customizations here that should be ran regardless of the image type
 
-Remove-Item -Path "C:\installers" -Recurse -Force
-Remove-Item -Path "C:\temp" -Recurse -Force
+try {
+    Remove-Item -Path "C:\installers" -Recurse -Force
+    Remove-Item -Path "C:\temp" -Recurse -Force
+}
+catch {
+    Write-Error "An error occurred during cleanup (Exitpoint): $_"
+    exit 1
+}
+
 
 Write-Information "Customization completed successfully."

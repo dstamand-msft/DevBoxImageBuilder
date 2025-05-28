@@ -1,2 +1,1 @@
 apps/*
-customization-scripts/Entrypoint.ps1

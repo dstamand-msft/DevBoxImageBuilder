@@ -25,15 +25,21 @@ param(
 )
 
 $InformationPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
-Write-Verbose "[ExitPoint] Executing the customizations"
-    # call your sub customization scripts here with arguments as necessary such as:
-    # -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
-    # example:
-    # & 'C:\installers\artifacts\customization-scripts\ScriptA.ps1' -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
-# add any customizations here that should be ran regardless of the image type
+try {
+    Write-Verbose "[ExitPoint] Executing the customizations"
 
-Write-Verbose "[ExitPoint] Cleaning up the installers directory"
-Remove-Item -Path "C:\installers" -Recurse -Force
+    $artifactsPath = "C:\installers\artifacts"
 
-Write-Information "[ExitPoint] Customization completed successfully."
+    & "$artifactsPath\scripts\DevBoxPostSetupTasks.ps1" -OrganizationName "Contoso"
+
+    Write-Verbose "[ExitPoint] Cleaning up the installers directory"
+    Remove-Item -Path "C:\installers" -Recurse -Force
+
+    Write-Information "[ExitPoint] Customization completed successfully."
+}
+catch {
+    Write-Error "An error occurred during cleanup (Exitpoint): $_"
+    exit 1
+}

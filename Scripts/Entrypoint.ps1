@@ -33,4 +33,12 @@ Write-Verbose "Executing the customizations"
     # & 'C:\installers\artifacts\customization-scripts\ScriptA.ps1' -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
 # add any customizations here that should be ran regardless of the image type
 
+try{
+
+}
+catch {
+    Write-Error "An error occurred during customization (Entrypoint): $_"
+    exit 1
+}
+
 Write-Information "Customization completed successfully."
