@@ -90,6 +90,7 @@ EnableFSMonitor=Disabled
 
     Write-Verbose "[Entrypoint] Install WSL"
     Start-Process "wsl.exe" -ArgumentList "--install" -Wait
+    Start-Process "wsl.exe" -ArgumentList "--update" -Wait
 
     [Environment]::SetEnvironmentVariable(
         "Path",
