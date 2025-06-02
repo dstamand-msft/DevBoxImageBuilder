@@ -101,8 +101,14 @@ foreach ($item in $filesToDownload) {
 
     try {
         # If the blobName is a wildcard, download all blobs in the container
-    if ($blobName -eq "*") {
-        $blobs = Get-AzStorageBlob -Container $containerName -Context $storageAccountContext
+    if ($blobName.EndsWith("*")) {
+        if ($blobName.Length -eq 1 -and $blobName -eq "*") {
+            $blobs = Get-AzStorageBlob -Container $containerName -Context $storageAccountContext
+        }
+        else {
+            # blob supports wildcard (*) search, so we need to get all blobs that match the pattern
+            $blobs = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $storageAccountContext
+        }
         foreach ($blob in $blobs) {
             $actualBlobName = $blob.Name
             $destionationDirectory = [System.IO.Path]::GetDirectoryName("$ArtifactsDownloadPath\$containerName\$actualBlobName")
