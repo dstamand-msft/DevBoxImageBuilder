@@ -101,41 +101,41 @@ foreach ($item in $filesToDownload) {
 
     try {
         # If the blobName is a wildcard, download all blobs in the container
-    if ($blobName.EndsWith("*")) {
-        if ($blobName.Length -eq 1 -and $blobName -eq "*") {
-            $blobs = Get-AzStorageBlob -Container $containerName -Context $storageAccountContext
+        if ($blobName.EndsWith("*")) {
+            if ($blobName.Length -eq 1 -and $blobName -eq "*") {
+             $blobs = Get-AzStorageBlob -Container $containerName -Context $storageAccountContext
+            }
+            else {
+                # blob supports wildcard (*) search, so we need to get all blobs that match the pattern
+                $blobs = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $storageAccountContext
+            }
+            foreach ($blob in $blobs) {
+                $actualBlobName = $blob.Name
+                $destionationDirectory = [System.IO.Path]::GetDirectoryName("$ArtifactsDownloadPath\$containerName\$actualBlobName")
+                if ((Test-Path -Path $destionationDirectory) -eq $false) {
+                    New-Item -Path $destionationDirectory -ItemType Directory | Out-Null
+                }
+                Get-AzStorageBlobContent -Blob $actualBlobName `
+                                        -Container $containerName `
+                                        -Destination "$ArtifactsDownloadPath\$containerName\$actualBlobName" `
+                                        -Context $storageAccountContext `
+                                        -Force | Out-Null
+                Write-Information "Downloaded $containerName/$actualBlobName"
+            }
         }
         else {
-            # blob supports wildcard (*) search, so we need to get all blobs that match the pattern
-            $blobs = Get-AzStorageBlob -Container $containerName -Blob $blobName -Context $storageAccountContext
-        }
-        foreach ($blob in $blobs) {
-            $actualBlobName = $blob.Name
+            $actualBlobName = $blobName
             $destionationDirectory = [System.IO.Path]::GetDirectoryName("$ArtifactsDownloadPath\$containerName\$actualBlobName")
             if ((Test-Path -Path $destionationDirectory) -eq $false) {
                 New-Item -Path $destionationDirectory -ItemType Directory | Out-Null
             }
-            Get-AzStorageBlobContent -Blob $actualBlobName `
-                                     -Container $containerName `
-                                     -Destination "$ArtifactsDownloadPath\$containerName\$actualBlobName" `
-                                     -Context $storageAccountContext `
-                                     -Force | Out-Null
-            Write-Information "Downloaded $containerName/$actualBlobName"
+            Get-AzStorageBlobContent -Blob $blobName `
+                                    -Container $containerName `
+                                    -Destination "$ArtifactsDownloadPath\$containerName\$actualBlobName" `
+                                    -Context $storageAccountContext `
+                                    -Force | Out-Null
+            Write-Information "Downloaded $containerName/$blobName"
         }
-    }
-    else {
-        $actualBlobName = $blobName
-        $destionationDirectory = [System.IO.Path]::GetDirectoryName("$ArtifactsDownloadPath\$containerName\$actualBlobName")
-        if ((Test-Path -Path $destionationDirectory) -eq $false) {
-            New-Item -Path $destionationDirectory -ItemType Directory | Out-Null
-        }
-        Get-AzStorageBlobContent -Blob $blobName `
-                                 -Container $containerName `
-                                 -Destination "$ArtifactsDownloadPath\$containerName\$actualBlobName" `
-                                 -Context $storageAccountContext `
-                                 -Force | Out-Null
-        Write-Information "Downloaded $containerName/$blobName"
-    }
     }
     catch {
         Write-Error -Message "Failed to download the file $containerName/$actualBlobName from the storage account: $($_.Exception)"
