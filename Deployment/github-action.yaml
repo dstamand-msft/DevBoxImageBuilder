@@ -14,6 +14,11 @@ env:
   RESOURCE_GROUP_NAME: ${{ vars.RESOURCE_GROUP_NAME }}
   LOCATION: ${{ vars.LOCATION }}
 
+inputs:
+  deployTemplate:
+    required: true
+    type: boolean
+
 jobs:
   deploy-and-run:
     name: Deploy and Run Template
@@ -35,6 +40,7 @@ jobs:
     - name: Deploy Bicep Template
       id: deploy_bicep
       uses: azure/bicep-deploy@v2
+      if: ${{ inputs.deployTemplate }}
       with:
         type: deployment
         operation: create
@@ -47,11 +53,23 @@ jobs:
         parameters-file: ./IaC/BringYourOwnResources/aib.parameters.json
         deploymentMode: Incremental
 
+    - name: Set imageTemplate environment variable
+      id: set_image_template
+      shell: pwsh
+      run: |
+        if (${{ inputs.deployTemplate }}) {
+          echo "imageTemplate=${{ steps.deploy_bicep.outputs.imageTemplate }}" >> $env:IMAGE_TEMPLATE_NAME
+        } else {
+          $json = Get-Content './IaC/BringYourOwnResources/aib.parameters.json' | ConvertFrom-Json
+          $name = $json.parameters.imageTemplateName.value
+          echo "imageTemplate=$name" >> $env:IMAGE_TEMPLATE_NAME
+        }
+
     - name: Azure PowerShell script
       uses: azure/powershell@v2
       with:
         azPSVersion: "latest"
         inlineScript: |
           ./Deployment/Invoke-ImageTemplate.ps1 `
-          -ImageTemplateName ${{ steps.deploy_bicep.outputs.imageTemplate }} `
+          -ImageTemplateName ${{ env.IMAGE_TEMPLATE_NAME }} `
           -ResourceGroupName ${{ env.RESOURCE_GROUP_NAME }}

@@ -16,9 +16,10 @@ parameters:
 - name: serviceConnectionName
   displayName: The service connection name to use to deploy your resources
   type: string
-# - name: deployAIBTemplate
-#   displayName: Deploy Azure Image Builder template
-#   type: boolean
+- name: deployAIBTemplate
+  displayName: Deploy Azure Image Builder template
+  type: boolean
+  default: true
 
 jobs:
 - job: Deploy and Run
@@ -29,6 +30,7 @@ jobs:
   - task: AzureResourceManagerTemplateDeployment@3
     name: DeployBicep
     displayName: Deploy Bicep template
+    condition: eq(parameters.deployAIBTemplate, true)
     inputs:
       deploymentScope: "Resource Group"
       connectedServiceName: "${{ parameters.serviceConnectionName }}"
@@ -45,12 +47,23 @@ jobs:
   - task: PowerShell@2
     name: SetOutputs
     displayName: Set Outputs from Bicep deployment
+    condition: eq(parameters.deployAIBTemplate, true)
     inputs:
       pwsh: true
       targetType: "inline"
       script: |
         $outputs = ConvertFrom-Json "$(DeployBicep.deploymentOutputs)"
         Write-Host "##vso[task.setvariable variable=imageTemplateName;isReadOnly=true]$outputs.imageTemplateName.value"
+  - task: PowerShell@2
+    name: Extract Image Template name
+    condition: eq(parameters.deployAIBTemplate, false)
+    inputs:
+      pwsh: true
+      targetType: "inline"
+      script: |
+        $parameters = Get-Content -Raw "$(Build.SourcesDirectory)/IaC/BringYourOwnResources/aib.parameters.json" | Convert-FromJson
+        $imageTemplateName = $parameters.parameters.imageTemplateName.value
+        Write-Host "##vso[task.setvariable variable=imageTemplateName;isReadOnly=true]$imageTemplateName"
   - task: AzurePowerShell@5
     name: RunTemplate
     displayName: Run Image template

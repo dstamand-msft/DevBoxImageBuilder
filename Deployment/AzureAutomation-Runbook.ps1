@@ -33,6 +33,8 @@ param (
     [Parameter(Mandatory = $true, HelpMessage = "The path to the Bicep parameters file to use as the AIB template in the storage account. Should be container/file.parameters.json. File should be parametrized with the correct value")]
     [ValidateNotNullOrEmpty()]
     [string]$AIBTemplateBicepParametersPath,
+    [Parameter(HelpMessage = "Determines whether to deploy the Azure Image Builder template. Default is true.")]
+    [bool]$DeployTemplate = $true,
     [Parameter(HelpMessage = "Determines whether the script is ran using ManagedIdentity or not. Default is true.")]
     [bool]$WithManagedIdentity = $true,
     [Parameter(HelpMessage = "Determines whether to keep the image builder template for debugging or not when the image has successfully built. Default is false.")]
@@ -64,82 +66,89 @@ catch {
     throw $_.Exception
 }
 
-# Look into the windows $PATH environment variable to see if bicep is installed.
-# if it is not installed, download it from the GitHub release page, https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe and add it to the PATH
-if (-not (Get-Command bicep -ErrorAction SilentlyContinue)) {
-    Write-Output "Bicep is not installed. Downloading and installing it..."
-    if (!(Test-Path -Path "$env:TEMP/tools")) {
-        New-Item -Path "$env:TEMP/tools" -ItemType Directory -Force | Out-Null
-    }
-    $bicepPath = Join-Path -Path $env:TEMP -ChildPath "tools/bicep.exe"
-    Invoke-WebRequest -Uri "https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe" -OutFile $bicepPath
-    $env:Path = $env:Path + ";" + ([System.IO.Path]::GetDirectoryName($bicepPath))
-}
-
-$storageAccountContext = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount -ErrorAction SilentlyContinue
-if ($null -eq $storageAccountContext) {
-    Write-Error -Message "The storage account $StorageAccountName was not found in the resource group $ResourceGroupName or you do not have permission to access it."
-    throw "The storage account $StorageAccountName was not found in the resource group $ResourceGroupName or you do not have permission to access it."
-}
-
-$filesDirectory = [System.IO.Path]::GetTempPath()
-$templateContainerName = $AIBTemplateBicepTemplatePath.Split("/")[0]
-$templateBlobName = $AIBTemplateBicepTemplatePath.Split("/")[1]
-$parametersContainerName = $AIBTemplateBicepParametersPath.Split("/")[0]
-$parametersBlobName = $AIBTemplateBicepParametersPath.Split("/")[1]
-
-if ([string]::IsNullOrEmpty($templateContainerName) -or [string]::IsNullOrEmpty($templateBlobName))
-{
-    Write-Error -Message "The AIBTemplateBicepTemplatePath parameter should be in the format container/blob.bicep"
-    throw "The AIBTemplateBicepTemplatePath parameter should be in the format container/blob.bicep"
-}
-
-if ([string]::IsNullOrEmpty($parametersContainerName) -or [string]::IsNullOrEmpty($parametersBlobName))
-{
-    Write-Error -Message "The AIBTemplateBicepParametersPath parameter should be in the format container/blob.parameters.json"
-    throw "The AIBTemplateBicepParametersPath parameter should be in the format container/blob.parameters.json"
-}
-
-try {
-    # download the bicep template files and overwrite if they already exist locally
-    Get-AzStorageBlobContent -Blob $templateBlobName -Container $templateContainerName -Destination $filesDirectory -Context $storageAccountContext -Force | Out-Null
-    $moduleTemplateBlobName = "$([System.IO.Path]::GetFileNameWithoutExtension($templateBlobName)).module.bicep"
-    Get-AzStorageBlobContent -Blob $moduleTemplateBlobName -Container $templateContainerName -Destination $filesDirectory -Context $storageAccountContext -Force | Out-Null
-}
-catch {
-    Write-Error -Message "Failed to download the Bicep template files from the storage account: $($_.Exception)"
-    throw $_.Exception
-}
-
-try {
-    Get-AzStorageBlobContent -Blob $parametersBlobName -Container $parametersContainerName -Destination $filesDirectory -Context $storageAccountContext -Force | Out-Null
-}
-catch {
-    Write-Error -Message "Failed to download the Bicep parameters file from the storage account: $($_.Exception)"
-    throw $_.Exception
-}
-
 $aibTemplatePath = Join-Path -Path $filesDirectory -ChildPath $templateBlobName
 $aibParametersTemplatePath = Join-Path -Path $filesDirectory -ChildPath $parametersBlobName
 
-Write-Debug "Checking if the ImageTemplate already exist, if so deleting it..."
-$imageTemplate = Get-AzImageBuilderTemplate -Name $imageTemplateName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
-if ($null -ne $imageTemplate) {
-    Write-Output "ImageTemplate already exists. Deleting it..."
-    Remove-AzImageBuilderTemplate -Name $imageTemplateName -ResourceGroupName $ResourceGroupName | Out-Null
+if ($DeployTemplate) {
+
+    # Look into the windows $PATH environment variable to see if bicep is installed.
+    # if it is not installed, download it from the GitHub release page, https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe and add it to the PATH
+    if (-not (Get-Command bicep -ErrorAction SilentlyContinue)) {
+        Write-Output "Bicep is not installed. Downloading and installing it..."
+        if (!(Test-Path -Path "$env:TEMP/tools")) {
+            New-Item -Path "$env:TEMP/tools" -ItemType Directory -Force | Out-Null
+        }
+        $bicepPath = Join-Path -Path $env:TEMP -ChildPath "tools/bicep.exe"
+        Invoke-WebRequest -Uri "https://github.com/Azure/bicep/releases/latest/download/bicep-win-x64.exe" -OutFile $bicepPath
+        $env:Path = $env:Path + ";" + ([System.IO.Path]::GetDirectoryName($bicepPath))
+    }
+
+    $storageAccountContext = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount -ErrorAction SilentlyContinue
+    if ($null -eq $storageAccountContext) {
+        Write-Error -Message "The storage account $StorageAccountName was not found in the resource group $ResourceGroupName or you do not have permission to access it."
+        throw "The storage account $StorageAccountName was not found in the resource group $ResourceGroupName or you do not have permission to access it."
+    }
+
+    $filesDirectory = [System.IO.Path]::GetTempPath()
+    $templateContainerName = $AIBTemplateBicepTemplatePath.Split("/")[0]
+    $templateBlobName = $AIBTemplateBicepTemplatePath.Split("/")[1]
+    $parametersContainerName = $AIBTemplateBicepParametersPath.Split("/")[0]
+    $parametersBlobName = $AIBTemplateBicepParametersPath.Split("/")[1]
+
+    if ([string]::IsNullOrEmpty($templateContainerName) -or [string]::IsNullOrEmpty($templateBlobName))
+    {
+        Write-Error -Message "The AIBTemplateBicepTemplatePath parameter should be in the format container/blob.bicep"
+        throw "The AIBTemplateBicepTemplatePath parameter should be in the format container/blob.bicep"
+    }
+
+    if ([string]::IsNullOrEmpty($parametersContainerName) -or [string]::IsNullOrEmpty($parametersBlobName))
+    {
+        Write-Error -Message "The AIBTemplateBicepParametersPath parameter should be in the format container/blob.parameters.json"
+        throw "The AIBTemplateBicepParametersPath parameter should be in the format container/blob.parameters.json"
+    }
+
+    try {
+        # download the bicep template files and overwrite if they already exist locally
+        Get-AzStorageBlobContent -Blob $templateBlobName -Container $templateContainerName -Destination $filesDirectory -Context $storageAccountContext -Force | Out-Null
+        $moduleTemplateBlobName = "$([System.IO.Path]::GetFileNameWithoutExtension($templateBlobName)).module.bicep"
+        Get-AzStorageBlobContent -Blob $moduleTemplateBlobName -Container $templateContainerName -Destination $filesDirectory -Context $storageAccountContext -Force | Out-Null
+    }
+    catch {
+        Write-Error -Message "Failed to download the Bicep template files from the storage account: $($_.Exception)"
+        throw $_.Exception
+    }
+
+    try {
+        Get-AzStorageBlobContent -Blob $parametersBlobName -Container $parametersContainerName -Destination $filesDirectory -Context $storageAccountContext -Force | Out-Null
+    }
+    catch {
+        Write-Error -Message "Failed to download the Bicep parameters file from the storage account: $($_.Exception)"
+        throw $_.Exception
+    }
+
+    Write-Debug "Checking if the ImageTemplate already exist, if so deleting it..."
+    $imageTemplate = Get-AzImageBuilderTemplate -Name $imageTemplateName -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    if ($null -ne $imageTemplate) {
+        Write-Output "ImageTemplate already exists. Deleting it..."
+        Remove-AzImageBuilderTemplate -Name $imageTemplateName -ResourceGroupName $ResourceGroupName | Out-Null
+    }
+
+    Write-Output "Provisioning resources..."
+    $deployment = New-AzResourceGroupDeployment -Name "WVDImageTemplate-$ImageType" `
+                                -ResourceGroupName $ResourceGroupName `
+                                -TemplateFile $aibTemplatePath `
+                                -TemplateParameterFile $aibParametersTemplatePath `
+                                -Verbose `
+                                -ErrorAction Stop
+
+    Write-Output "Resources provisioned"
+
+    $imageTemplateName = $deployment.Outputs.imageTemplateName.Value
 }
-
-Write-Output "Provisioning resources..."
-$deployment = New-AzResourceGroupDeployment -Name "WVDImageTemplate-$ImageType" `
-                              -ResourceGroupName $ResourceGroupName `
-                              -TemplateFile $aibTemplatePath `
-                              -TemplateParameterFile $aibParametersTemplatePath `
-                              -Verbose `
-                              -ErrorAction Stop
-
-Write-Output "Resources provisioned"
-
-$imageTemplateName = $deployment.Outputs.imageTemplateName.Value
+else {
+    $aibParameters = Get-Content -Raw $aibParametersTemplatePath | Convert-FromJson
+    $imageTemplateName = $aibParameters.parameters.imageTemplateName.value
+}
 
 Write-Output "Running image template..."
 Invoke-AzResourceAction `
