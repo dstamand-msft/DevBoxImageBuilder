@@ -101,7 +101,7 @@ New-AzResourceGroupDeployment -ResourceGroupName <your_resource_group> -Template
 
 Full:
 ```PowerShell
-New-AzDeployment -Location CanadaCentral -Name <your_resource_group> -TemplateParameterFile /path/to/aib.parameters.json -TemplateFile /path/to/IaC/ProvisionAll\aib.bicep -Verbose
+New-AzDeployment -Location CanadaCentral -Name <your_deployment_name> -TemplateParameterFile /path/to/aib.parameters.json -TemplateFile /path/to/IaC/ProvisionAll\aib.bicep -Verbose
 ```
 ## Debugging
 
