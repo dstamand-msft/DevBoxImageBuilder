@@ -95,6 +95,10 @@ catch {
 Write-Information "Downloading artifacts..."
 $filesToDownload = Get-Content -Path (Join-Path -Path $ArtifactsDownloadPath -ChildPath $artifactsMetadataBlobName)
 foreach ($item in $filesToDownload) {
+    # skip comments
+    if ($item.StartsWith("#")) {
+        continue
+    }
     $firstSlashIndex = $item.IndexOf("/")
     $containerName = $item.Substring(0, $firstSlashIndex)
     $blobName = $item.Substring($firstSlashIndex+1)

@@ -16,6 +16,9 @@ parameters:
 - name: serviceConnectionName
   displayName: The service connection name to use to deploy your resources
   type: string
+# - name: deployAIBTemplate
+#   displayName: Deploy Azure Image Builder template
+#   type: boolean
 
 jobs:
 - job: Deploy and Run
@@ -35,8 +38,8 @@ jobs:
       resourceGroupName: "${{ parameters.resourceGroupName }}"
       location: "${{ parameters.location }}"
       templateLocation: "Linked artifact"
-      csmFile: "$(Build.SourcesDirectory)/IaC/aib.bicep"
-      csmParametersFile: "$(Build.SourcesDirectory)/IaC/aib.parameters.json"
+      csmFile: "$(Build.SourcesDirectory)/IaC/BringYourOwnResources/aib.bicep"
+      csmParametersFile: "$(Build.SourcesDirectory)/IaC/BringYourOwnResources/aib.parameters.json"
       deploymentOutputs: deploymentOutputs
   # see https://github.com/microsoft/azure-pipelines-tasks/tree/master/Tasks/AzureResourceManagerTemplateDeploymentV3#deployment-outputs
   - task: PowerShell@2
@@ -59,6 +62,8 @@ jobs:
       scriptPath: "$(Build.SourcesDirectory)/Deployment/Invoke-ImageTemplate.ps1"
       scriptArguments:
         -ImageTemplateName "$(imageTemplateName)" `
-        -ResourceGroupName "${{ parameters.resourceGroupName }}" `
+        -ResourceGroupName "${{ parameters.resourceGroupName }}"
+        -OutputLogs `
+        -KeepImageBuilderTemplate $TRUE
       informationPreference: "continue"
       errorActionPreference: "stop"

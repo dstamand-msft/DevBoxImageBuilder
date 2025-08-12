@@ -1,0 +1,20 @@
+{
+    "Name": "Azure Image Builder Image Gallery Distribute Role",
+    "Description": "Allows an identity to inject the images and distribute them to a Shared Image Gallery.",
+    "IsCustom": true,
+    "AssignableScopes": [
+        "/subscriptions/<subscription_id>/resourceGroups/<resource_group_name>"
+    ],
+    "Actions": [],
+    "NotActions": [],
+    "DataActions": [
+        "Microsoft.Compute/images/write",
+        "Microsoft.Compute/images/read",
+        "Microsoft.Compute/images/delete",
+        "Microsoft.Compute/galleries/read",
+        "Microsoft.Compute/galleries/images/read",
+        "Microsoft.Compute/galleries/images/versions/read",
+        "Microsoft.Compute/galleries/images/versions/write"
+    ],
+    "NotDataActions": []
+}

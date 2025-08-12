@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "<value>"
+    },
+    "resourceGroupName": {
+      "value": "<value>"
+    },
+    "userIdentityName": {
+      "value": "<value>"
+    },
+    "galleryName": {
+      "value": "<value>"
+    },
+    "imageDefinitionName": {
+      "value": "<value>"
+    },
+    "imageTemplateName": {
+      "value": "it-"
+    },
+    "galleryImageIdentifier": {
+      "value": {
+        "publisher": "<value>",
+        "offer": "<value>",
+        "sku": "<value>"
+      }
+    },
+    "storageAccountName": {
+      "value": "<value>"
+    },
+    "scriptsContainerName": {
+      "value": "<value>"
+    },
+    "appsContainerName": {
+      "value": "<value>"
+    },    
+    "imageBuilderVMUserAssignedIdentityName": {
+      "value": "<value>"
+    },
+    "imageSource": {
+      "value": {
+        "type": "PlatformImage",
+        "publisher": "<value>",
+        "offer": "<value>",
+        "sku": "<value>",
+        "version": "latest"
+      }
+    },
+    "subnetId": {
+      "value": "<value>"
+    },
+    "stagingResourceName":{
+      "value": "<value>"
+    },
+    "subscriptionId": {
+      "value": "<value>"
+    },
+    "artifactsMetadataPath": {
+      "value": "<value>"
+    },
+    "keyVaultName": {
+      "value": "<value>"
+    },
+    "secretNames": {
+      "value": []
+    },
+    "tags": {
+      "value": {
+        "initiatedBy": "<value>"
+      }
+    }
+  }
+}

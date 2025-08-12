@@ -43,8 +43,8 @@ jobs:
         location: ${{ env.LOCATION }}
         subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
         resource-group-name: ${{ env.RESOURCE_GROUP_NAME }}
-        template-file: ./IaC/aib.bicep
-        parameters-file: ./IaC/aib.parameters.json
+        template-file: ./IaC/BringYourOwnResources/aib.bicep
+        parameters-file: ./IaC/BringYourOwnResources/aib.parameters.json
         deploymentMode: Incremental
 
     - name: Azure PowerShell script

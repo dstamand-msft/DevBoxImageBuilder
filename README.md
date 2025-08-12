@@ -28,6 +28,7 @@
     ```
 - The proper [permissions](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-permissions-powershell#allow-vm-image-builder-to-distribute-images) to distribute images on the compute gallery (formally known as Shared Image Gallery (SIG))
 - [Managed Identity Operator](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/identity#managed-identity-operator) (or RBAC permission `Microsoft.ManagedIdentity/userAssignedIdentities/assign/action`) on the Build VM User Managed Identity assigned to the Azure Image Builder identity to be able to associate it to the build VM. See the [documentation](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=json%2Cazure-powershell#user-assigned-identity-for-the-image-builder-build-vm) for more information.
+- If you are using the Staging resource group, the Owner RBAC role needs to be assigned to the Azure Image Builder identity.
 
 ## Determining the images
 
@@ -91,7 +92,11 @@ You can deploy this solution using 3 ways:
 - Azure DevOps, using the `azure-pipeline.yaml` file
 - GitHub Actions, using the `github-action.yaml`
 - Azure Automation Account, using the `AzureAutomation-Runbook.ps1` file
+- Manually using the following the following PowerShell commandlet:
 
+```PowerShell
+New-AzResourceGroupDeployment -ResourceGroupName <your_resource_group> -TemplateParameterFile C:\temp\devbox-aib\aib-parameters.jsonc -TemplateFile C:\Sources\MSFT\dstamand\AzureImageBuilder\IaC\aib.bicep -Verbose
+```
 ## Debugging
 
 The logs are located in the storage account in the staging resource group, under the blob container `packerlogs`. you can download the log file to view the process. While not exactly meant for this, you can also use a tool like [CMTrace](https://www.microsoft.com/en-us/evalcenter/download-microsoft-endpoint-configuration-manager) to view the log in an easier fashion. Just run executable and it will unzip itself. Once you see the files within you simply go to `SMSSETUP\Tools` and you will find the tool there.
