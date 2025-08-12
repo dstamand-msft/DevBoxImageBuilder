@@ -8,13 +8,7 @@
     "resourceGroupName": {
       "value": "<value>"
     },
-    "userIdentityResourceGroupName": {
-      "value": "<value>"
-    },
     "userIdentityName": {
-      "value": "<value>"
-    },
-    "galleryResourceGroupName": {
       "value": "<value>"
     },
     "galleryName": {
@@ -33,18 +27,15 @@
         "sku": "<value>"
       }
     },
-    "storageAccountResourceGroupName": {
-      "value": "<value>"
-    },
     "storageAccountName": {
       "value": "<value>"
     },
     "scriptsContainerName": {
       "value": "<value>"
     },
-    "imageBuilderVMUserAssignedIdentityResourceGroupName": {
+    "appsContainerName": {
       "value": "<value>"
-    },
+    },    
     "imageBuilderVMUserAssignedIdentityName": {
       "value": "<value>"
     },
@@ -60,7 +51,7 @@
     "subnetId": {
       "value": "<value>"
     },
-    "stagingResourceGroupId":{
+    "stagingResourceName":{
       "value": "<value>"
     },
     "subscriptionId": {
