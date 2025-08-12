@@ -94,8 +94,14 @@ You can deploy this solution using 3 ways:
 - Azure Automation Account, using the `AzureAutomation-Runbook.ps1` file
 - Manually using the following the following PowerShell commandlet:
 
+Bring your own resources:
 ```PowerShell
-New-AzResourceGroupDeployment -ResourceGroupName <your_resource_group> -TemplateParameterFile C:\temp\devbox-aib\aib-parameters.jsonc -TemplateFile C:\Sources\MSFT\dstamand\AzureImageBuilder\IaC\aib.bicep -Verbose
+New-AzResourceGroupDeployment -ResourceGroupName <your_resource_group> -TemplateParameterFile /path/to/aib-parameters.jsonc -TemplateFile /path/to/IaC/BringYourOwnResources/aib.bicep -Verbose
+```
+
+Full:
+```PowerShell
+New-AzDeployment -Location CanadaCentral -Name <your_resource_group> -TemplateParameterFile /path/to/aib.parameters.json -TemplateFile /path/to/IaC/ProvisionAll\aib.bicep -Verbose
 ```
 ## Debugging
 
