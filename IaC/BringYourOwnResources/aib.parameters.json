@@ -32,7 +32,7 @@
     "storageAccountName": {
       "value": "<value>"
     },
-    "scriptContainerName": {
+    "scriptsContainerName": {
       "value": "<value>"
     },
     "imageBuilderVMUserAssignedIdentityResourceGroupName": {

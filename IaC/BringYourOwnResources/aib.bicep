@@ -84,17 +84,17 @@ param tags object = {}
 @description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' existing = {
   name: storageAccountName
   scope: resourceGroup(storageAccountResourceGroupName)
 }
 
-resource userImgBuilderIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+resource userImgBuilderIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-01-31-preview' existing = {
   name: userIdentityName
   scope: resourceGroup(userIdentityResourceGroupName)
 }
 
-resource vmImgBuilderIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+resource vmImgBuilderIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-01-31-preview' existing = {
   name: imageBuilderVMUserAssignedIdentityName
   scope: resourceGroup(imageBuilderVMUserAssignedIdentityResourceGroupName)
 }
@@ -115,7 +115,7 @@ param keyVaultName string = ''
 @description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
 param secretNames array = []
 
-module imageTemplate 'aib.module.bicep' = {
+module imageTemplate '../aib.module.bicep' = {
   name: imageTemplateName
   scope: resourceGroup(resourceGroupName)
   params: {

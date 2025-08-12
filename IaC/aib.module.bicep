@@ -1,5 +1,3 @@
-targetScope = 'resourceGroup'
-
 @description('The location of the resources')
 param location string
 
@@ -82,6 +80,12 @@ var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
   ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
   : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
+var vnetConfig = !empty(subnetId)
+  ? {
+      subnetId: subnetId
+    }
+  : null
+
 resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01' = {
   name: imageTemplateName
   location: location
@@ -108,11 +112,9 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
       userAssignedIdentities: [
         imageBuilderVMUserAssignedIdentityId
       ]
-      vnetConfig: {
-        subnetId: !empty(subnetId) ? subnetId : ''
-      }
+      vnetConfig: vnetConfig
     }
-    stagingResourceGroup: !empty(stagingResourceGroupId) ? stagingResourceGroupId : ''
+    stagingResourceGroup: !empty(stagingResourceGroupId) ? stagingResourceGroupId : null
     // possible values: 'abort', 'cleanup'
     // cleanup: Ensures that temporary resources created by Packer are cleaned up even if Packer or one of the customizations/validations encounters an error.
     //          This maintains backwards compatibility with existing behavior.

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "<value>"
+    },
+    "resourceGroupName": {
+      "value": "<value>"
+    },
+    "userIdentityResourceGroupName": {
+      "value": "<value>"
+    },
+    "userIdentityName": {
+      "value": "<value>"
+    },
+    "galleryResourceGroupName": {
+      "value": "<value>"
+    },
+    "galleryName": {
+      "value": "<value>"
+    },
+    "imageDefinitionName": {
+      "value": "<value>"
+    },
+    "imageTemplateName": {
+      "value": "it-"
+    },
+    "galleryImageIdentifier": {
+      "value": {
+        "publisher": "<value>",
+        "offer": "<value>",
+        "sku": "<value>"
+      }
+    },
+    "storageAccountResourceGroupName": {
+      "value": "<value>"
+    },
+    "storageAccountName": {
+      "value": "<value>"
+    },
+    "scriptsContainerName": {
+      "value": "<value>"
+    },
+    "imageBuilderVMUserAssignedIdentityResourceGroupName": {
+      "value": "<value>"
+    },
+    "imageBuilderVMUserAssignedIdentityName": {
+      "value": "<value>"
+    },
+    "imageSource": {
+      "value": {
+        "type": "PlatformImage",
+        "publisher": "<value>",
+        "offer": "<value>",
+        "sku": "<value>",
+        "version": "latest"
+      }
+    },
+    "subnetId": {
+      "value": "<value>"
+    },
+    "stagingResourceGroupId":{
+      "value": "<value>"
+    },
+    "subscriptionId": {
+      "value": "<value>"
+    },
+    "artifactsMetadataPath": {
+      "value": "<value>"
+    },
+    "keyVaultName": {
+      "value": "<value>"
+    },
+    "secretNames": {
+      "value": []
+    },
+    "tags": {
+      "value": {
+        "initiatedBy": "<value>"
+      }
+    }
+  }
+}
