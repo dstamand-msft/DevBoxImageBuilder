@@ -26,7 +26,7 @@ param(
 
 $InformationPreference = "Continue"
 
-Write-Verbose "Executing the customizations"
+Write-Verbose "[Exitpoint] Executing the customizations"
     # call your sub customization scripts here with arguments as necessary such as:
     # -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
     # example:
@@ -43,4 +43,4 @@ catch {
 }
 
 
-Write-Information "Customization completed successfully."
+Write-Information "[Exitpoint] Customization completed successfully."

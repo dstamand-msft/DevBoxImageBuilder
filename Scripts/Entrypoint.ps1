@@ -26,7 +26,7 @@ param(
 
 $InformationPreference = "Continue"
 
-Write-Verbose "Executing the customizations"
+Write-Verbose "[Entrypoint] Executing the customizations"
     # call your sub customization scripts here with arguments as necessary such as:
     # -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
     # example:
@@ -34,11 +34,11 @@ Write-Verbose "Executing the customizations"
 # add any customizations here that should be ran regardless of the image type
 
 try{
-
+    $artifactsPath = "C:\installers\artifacts"
 }
 catch {
     Write-Error "An error occurred during customization (Entrypoint): $_"
     exit 1
 }
 
-Write-Information "Customization completed successfully."
+Write-Information "[Entrypoint] Customization completed successfully."
