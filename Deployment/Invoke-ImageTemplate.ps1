@@ -77,7 +77,14 @@ while ($true) {
                 Write-Warning "[$(Get-Date -Format "yyyy-MM-dd HH:mm:ss")] No container instance group found in the staging resource group yet. Log output will not be available yet."
             }
             else {
-                $containerInstanceGroupName = $containerInstanceGroup.Name
+                # if there are multiple container groups, get the last one (the most recent one)
+                if ($containerInstanceGroup -is [System.Array]) {
+                    $containerInstanceGroupName = $containerInstanceGroup[$containerInstanceGroup.Length - 1].Name
+                }
+                else {
+                    $containerInstanceGroupName = $containerInstanceGroup.Name
+                }
+
                 $containerInstanceGroup = Get-AzResource -ResourceGroupName $stagingResourceGroupName -ResourceType "Microsoft.ContainerInstance/containerGroups"
                 $logs = Get-AzContainerInstanceLog -ResourceGroupName $stagingResourceGroupName -ContainerGroupName $containerInstanceGroupName -ContainerName $containerName -Tail 100 -ErrorAction SilentlyContinue
                 if ($null -ne $logs) {
