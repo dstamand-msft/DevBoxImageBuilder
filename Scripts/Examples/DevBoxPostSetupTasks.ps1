@@ -46,11 +46,14 @@ Unregister-ScheduledTask -TaskName `"$taskName`" -Confirm:`$false
 
 `Write-Output "[`$(Get-Date -Format `"yyyy-MM-dd HH:mm:ss`")] Setup script executed for user: `$env:USERNAME`"
 
-cmd /c msg * "You will be logged off in 30 seconds to complete system setup. Please log in again."
-Start-Sleep -Seconds 30
+cmd /c msg * "To be able to use Docker, you will need to log off and log in again."
+
+# if you log-off the user, subsequent customizations (users) that are set in the userTasks, won't be executed.
+#cmd /c msg * "You will be logged off in 30 seconds to complete system setup. Please log in again."
 Stop-Transcript
 
-shutdown /l
+#Start-Sleep -Seconds 30
+#shutdown /l
 "@ | Set-Content -Path $scriptPath -Encoding UTF8 -Force
 
 Write-Output ">>> Post-setup script created at: $scriptPath"

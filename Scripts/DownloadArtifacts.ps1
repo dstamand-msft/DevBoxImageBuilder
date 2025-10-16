@@ -37,7 +37,7 @@ if (Get-Module -Name Az.Accounts, Az.Storage -ListAvailable) {
 } else {
     Write-Information "Installing the Az module..."
     # PowerShellGet requires NuGet provider version '2.8.5.201' or newer to interact with NuGet-based repositories
-    Install-PackageProvider NuGet -Force | Out-Null
+    Install-PackageProvider -Name NuGet -Force | Out-Null
     Set-PSRepository PSGallery -InstallationPolicy Trusted
     Install-Module -Name Az.Accounts, Az.Storage -AllowClobber -Scope CurrentUser -Repository PSGallery -Force
     Import-Module -Name Az.Accounts, Az.Storage
