@@ -97,4 +97,6 @@ jobs:
         inlineScript: |
           ./Deployment/Invoke-ImageTemplate.ps1 `
           -ImageTemplateName ${{ env.IMAGE_TEMPLATE_NAME }} `
-          -ResourceGroupName ${{ env.RESOURCE_GROUP_NAME }}
+          -ResourceGroupName ${{ env.RESOURCE_GROUP_NAME }} `
+          -OutputLogs `
+          -KeepImageBuilderTemplate $TRUE
