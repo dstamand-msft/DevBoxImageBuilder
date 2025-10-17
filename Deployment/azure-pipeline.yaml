@@ -22,15 +22,40 @@ parameters:
   default: true
 
 jobs:
-- job: Deploy and Run
+- job: CheckforChangesJob
+  displayName: Check if template redeployment is required
+  workspace:
+    clean: all
+  steps:
+  - task: PowerShell@2
+    name: CheckForChangesTask
+    displayName: Check for code changes requiring template redeployment
+    inputs:
+      pwsh: true
+      targetType: "inline"
+      script: |
+        Write-Host "Checking for code changes requiring template redeployment..."
+        $result = & "$(Build.SourcesDirectory)/Deployment/Get-CodeChanges.ps1" `
+                -DeploymentBicepFilePath "$(Build.SourcesDirectory)/IaC/BringYourOwnResources/aib.bicep" `
+                -ParametersFilePath "$(Build.SourcesDirectory)/IaC/BringYourOwnResources/aib.parameters.json" `
+                -GitRepositoryPath "$(Build.SourcesDirectory)"
+
+        if ($result -eq $true) {
+          Write-Host "##vso[task.setvariable variable=templateRedeploymentRequired;isReadOnly=true;isOutput=true]true"
+        }
+        else {
+          Write-Host "##vso[task.setvariable variable=templateRedeploymentRequired;isReadOnly=true;isOutput=true]false"
+        }
+- job: DeployAndRunJob
   displayName: Deploy and run template
+  dependsOn: CheckforChangesJob
   workspace:
     clean: all
   steps:
   - task: AzureResourceManagerTemplateDeployment@3
     name: DeployBicep
     displayName: Deploy Bicep template
-    condition: eq(parameters.deployAIBTemplate, true)
+    condition: eq(dependencies.CheckforChangesJob.outputs['CheckForChangesTask.templateRedeploymentRequired'], 'true')
     inputs:
       deploymentScope: "Resource Group"
       connectedServiceName: "${{ parameters.serviceConnectionName }}"
@@ -47,7 +72,7 @@ jobs:
   - task: PowerShell@2
     name: SetOutputs
     displayName: Set Outputs from Bicep deployment
-    condition: eq(parameters.deployAIBTemplate, true)
+    condition: eq(dependencies.CheckforChangesJob.outputs['CheckForChangesTask.templateRedeploymentRequired'], 'true')
     inputs:
       pwsh: true
       targetType: "inline"
@@ -56,7 +81,7 @@ jobs:
         Write-Host "##vso[task.setvariable variable=imageTemplateName;isReadOnly=true]$outputs.imageTemplateName.value"
   - task: PowerShell@2
     name: Extract Image Template name
-    condition: eq(parameters.deployAIBTemplate, false)
+    condition: eq(dependencies.CheckforChangesJob.outputs['CheckForChangesTask.templateRedeploymentRequired'], 'false')
     inputs:
       pwsh: true
       targetType: "inline"

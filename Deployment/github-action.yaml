@@ -20,6 +20,31 @@ inputs:
     type: boolean
 
 jobs:
+  check-for-changes:
+    name: Check for Changes
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Check for code changes requiring template redeployment
+      id: check_for_changes
+      shell: pwsh
+      run: |
+        $result = & "./Deployment/Get-CodeChanges.ps1" `
+        -DeploymentBicepFilePath "./IaC/BringYourOwnResources/aib.bicep" `
+        -ParametersFilePath "./IaC/BringYourOwnResources/aib.parameters.json"
+        -GitRepositoryPath "./"
+        if ($result -eq $true) {
+            echo "templateRedeploymentRequired=true" >> $GITHUB_ENV
+            echo "::set-output name=templateRedeploymentRequired::true"
+        }
+        else {
+            echo "templateRedeploymentRequired=true" >> $GITHUB_ENV
+            echo "::set-output name=templateRedeploymentRequired::true"        
+        }
+
   deploy-and-run:
     name: Deploy and Run Template
     runs-on: ubuntu-latest
