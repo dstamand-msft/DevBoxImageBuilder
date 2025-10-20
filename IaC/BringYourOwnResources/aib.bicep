@@ -115,7 +115,37 @@ param keyVaultName string = ''
 @description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
 param secretNames array = []
 
-module imageTemplate '../aib.module.bicep' = {
+module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId)){
+  name: imageTemplateName
+  scope: resourceGroup(resourceGroupName)
+  params: {
+    location: location
+    imageTemplateName: imageTemplateName
+    scriptsContainerName: scriptsContainerName
+    userImgBuilderIdentityId: userImgBuilderIdentity.id
+    imageBuilderVMUserAssignedIdentityId: vmImgBuilderIdentity.id
+    imageBuilderVMUserAssignedIdentityClientId: vmImgBuilderIdentity.properties.clientId
+    imageSource: imageSource
+    vmSkuSize: vmSkuSize
+    subnetId: subnetId
+    stagingResourceGroupId: stagingResourceGroupId
+    onCustomizerError: onCustomizerError
+    onValidationError: onValidationError
+    buildTimeoutInMinutes: buildTimeoutInMinutes
+    storageAccountBlobEndpoint: storageAccount.properties.primaryEndpoints.blob
+    galleryImageId: galleryImage.id
+    imageReplicationRegions: imageReplicationRegions
+    subscriptionId: subscriptionId
+    storageAccountName: storageAccountName
+    artifactsMetadataPath: artifactsMetadataPath
+    tags: tags
+    imageTags: imageTags
+    keyVaultName: keyVaultName
+    secretNames: secretNames
+  }
+}
+
+module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empty(subnetId)) {
   name: imageTemplateName
   scope: resourceGroup(resourceGroupName)
   params: {

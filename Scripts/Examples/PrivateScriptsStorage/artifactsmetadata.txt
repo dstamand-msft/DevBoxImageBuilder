@@ -1,0 +1,13 @@
+# use this file to add your container/path/to/file
+# this will download the Entrypoint, Exitpoint and DeprovisioningScript from the storage account
+# this is because as of today, Azure Image Builder, through the File customizer, by design, does not support firewalling (service endpoints/private endpoints)
+scripts/Entrypoint.ps1
+scripts/Exitpoint.ps1
+# Override the built-in deprovisioning script as WindowsAzureTelemetryAgent was removed and combined into WindowsAzureGuestAgent
+# see https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=json%2Cazure-powershell#generalize for more information
+# remove this customizer the moment the default sysprep command is fixed on the Azure platform in the Azure Image Builder service
+scripts/DeprovisioningScript.ps1
+scripts/HelperFunctions.ps1
+scripts/DevBoxPostSetupTasks.ps1
+apps/Bicep/bicep-v0.35.1.exe
+apps/Docker/DockerDesktopInstaller-v4.41.2.191736.exe

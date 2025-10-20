@@ -115,7 +115,37 @@ module associatedResources 'associatedresources.module.bicep' = {
   }
 }
 
-module imageTemplate '../aib.module.bicep' = {
+module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId)) {
+  name: imageTemplateName
+  scope: resourceGroup
+  params: {
+    location: location
+    imageTemplateName: imageTemplateName
+    scriptsContainerName: scriptsContainerName
+    userImgBuilderIdentityId: associatedResources.outputs.userImgBuilderIdentityIdResourceId
+    imageBuilderVMUserAssignedIdentityId: associatedResources.outputs.vmImgBuilderIdentityResourceId
+    imageBuilderVMUserAssignedIdentityClientId: associatedResources.outputs.vmImgBuilderIdentityClientId
+    imageSource: imageSource
+    vmSkuSize: vmSkuSize
+    subnetId: subnetId
+    stagingResourceGroupId: stagingResourceGroup.id
+    onCustomizerError: onCustomizerError
+    onValidationError: onValidationError
+    buildTimeoutInMinutes: buildTimeoutInMinutes
+    storageAccountBlobEndpoint: associatedResources.outputs.StorageAccountPrimaryEndpointsBlob
+    galleryImageId: associatedResources.outputs.galleryImageResourceId
+    imageReplicationRegions: imageReplicationRegions
+    subscriptionId: subscriptionId
+    storageAccountName: storageAccountName
+    artifactsMetadataPath: artifactsMetadataPath
+    tags: tags
+    imageTags: imageTags
+    keyVaultName: keyVaultName
+    secretNames: secretNames
+  }
+}
+
+module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empty(subnetId)) {
   name: imageTemplateName
   scope: resourceGroup
   params: {
