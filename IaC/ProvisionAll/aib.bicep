@@ -112,6 +112,7 @@ module associatedResources 'associatedresources.module.bicep' = {
     galleryImageIdentifier: galleryImageIdentifier
     softDeleteOnGallery: softDeleteOnGallery
     userIdentityName: userIdentityName
+    isUsingSubnetForAIB: !empty(subnetId)
   }
 }
 
