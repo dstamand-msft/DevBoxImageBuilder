@@ -64,20 +64,17 @@ param artifactsMetadataPath string
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
-@description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
-param secretNames array = []
-
 @description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 
 @description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
-var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
-  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+var entryPointInlineScript = !empty(keyVaultName)
+  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
   : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
-var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
-  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+var exitPointInlineScript = !empty(keyVaultName)
+  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
   : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
 var vnetConfig = !empty(subnetId)

@@ -16,6 +16,9 @@ param vmSkuSize string = 'Standard_D4s_v3'
 @description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
 param subnetId string = ''
 
+@description('(Optional) The name of the subnet where the container instance will be deployed. This subnet must allow outbound access to the Internet and to the subnet specified in subnetId and be delegated to the ACI service so that it can be used to deploy ACI resources. The subnet in property subnetId must allow inbound access from this subnet. See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=bicep%2Cazure-powershell#containerinstancesubnetid-optional')
+param containerInstanceSubnetId string = ''
+
 @description('The resource identifier of the user assigned identity for the Image builder VM. The user assigned identity for Azure Image Builder must have the "Managed Identity Operator" role assignment on all the user assigned identities for Azure Image Builder to be able to associate them to the build VM.')
 param imageBuilderVMUserAssignedIdentityId string
 
@@ -64,25 +67,23 @@ param artifactsMetadataPath string
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
-@description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
-param secretNames array = []
-
 @description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 
 @description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
-var entryPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
-  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+var entryPointInlineScript = !empty(keyVaultName)
+  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
   : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
-var exitPointInlineScript = !empty(keyVaultName) && !empty(secretNames)
-  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -SecretNames ${join(secretNames, ',')} -Verbose'
+var exitPointInlineScript = !empty(keyVaultName)
+  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
   : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
-var vnetConfig = !empty(subnetId)
+var vnetConfig = !empty(subnetId) && !empty(containerInstanceSubnetId)
   ? {
       subnetId: subnetId
+      containerInstanceSubnetId: containerInstanceSubnetId
     }
   : null
 
@@ -132,20 +133,27 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         type: 'PowerShell'
         name: 'Download the DownloadArtifacts.ps1 script'
         inline: [
-          '$storageAccountName = "${storageAccountBlobEndpoint}"'
+          '$storageAccountUrl = "${storageAccountBlobEndpoint}"'
           '$containerName = "${scriptsContainerName}"'
           '$blobName = "DownloadArtifacts.ps1"'
           '$resource = "https://storage.azure.com/"'
-          '$apiVersion = "2025-11-05"'
+          '$apiVersion = "2018-02-01"'
+          '$msiResId = "${imageBuilderVMUserAssignedIdentityId}"'
 
           '# Get the access token from the managed identity endpoint'
-          '$tokenResponse = Invoke-RestMethod -Method GET -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=$apiVersion&resource=$resource&msi_res_id=${imageBuilderVMUserAssignedIdentityId}" -Headers @{Metadata="true"}'
+          '$tokenResponse = Invoke-RestMethod -Method GET -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=$apiVersion&resource=$resource&msi_res_id=$msiResId" -Headers @{Metadata="true"}'
           '$accessToken = $tokenResponse.access_token'
 
-          '$blobUrl = "https://$storageAccountName.blob.core.windows.net/$containerName/$blobName"'
+          '$blobUrl = "$storageAccountUrl$containerName/$blobName"'
 
           '# Download the blob using the access token'
-          'Invoke-WebRequest -Uri $blobUrl -Headers @{Authorization = "Bearer $accessToken"} -OutFile $blobName'
+          '$headers = @{'
+          '  Authorization = "Bearer $accessToken"'
+          '  "x-ms-version" = "2025-11-05"'
+          '  "x-ms-date" = (Get-Date -Format "R")'
+          '}'
+
+          'Invoke-WebRequest -Uri $blobUrl -Headers $headers -OutFile $blobName'
         ]
       }
       {
@@ -163,7 +171,7 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
           'Move-Item -Path "C:\\installers\\scripts\\Exitpoint.ps1" -Destination "C:\\installers\\" -Force'
           'Move-Item -Path "C:\\installers\\scripts\\DeprovisioningScript.ps1" -Destination "C:\\" -Force'
         ]
-      }      
+      }
       {
         type: 'PowerShell'
         name: 'Run VM customization script (entry)'
