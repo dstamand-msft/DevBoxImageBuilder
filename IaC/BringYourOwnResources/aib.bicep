@@ -115,9 +115,6 @@ resource galleryImage 'Microsoft.Compute/galleries/images@2022-03-03' existing =
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
-@description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
-param secretNames array = []
-
 module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId)){
   name: imageTemplateName
   scope: resourceGroup(resourceGroupName)
