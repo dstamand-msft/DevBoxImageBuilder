@@ -158,18 +158,18 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
       }
       {
         type: 'PowerShell'
-        name: 'Run the download artifacts script'
-        inline: [
-          '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -IdentityClientId ${imageBuilderVMUserAssignedIdentityClientId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
-        ]
-      }
-      {
-        type: 'PowerShell'
         name: 'Move the Entrypoint, Exitpoint and Deprovisioning scripts to the installers folder'
         inline: [
           'Move-Item -Path "C:\\installers\\scripts\\Entrypoint.ps1" -Destination "C:\\installers\\" -Force'
           'Move-Item -Path "C:\\installers\\scripts\\Exitpoint.ps1" -Destination "C:\\installers\\" -Force'
           'Move-Item -Path "C:\\installers\\scripts\\DeprovisioningScript.ps1" -Destination "C:\\" -Force'
+        ]
+      }      
+      {
+        type: 'PowerShell'
+        name: 'Run the download artifacts script'
+        inline: [
+          '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -IdentityClientId ${imageBuilderVMUserAssignedIdentityClientId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
         ]
       }
       {
