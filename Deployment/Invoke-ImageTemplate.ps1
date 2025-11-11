@@ -15,6 +15,7 @@ SOFTWARE
 #>
 
 #Requires -Modules Az.Accounts, Az.Storage, Az.ImageBuilder, Az.ContainerInstance
+#Requires -Version 7
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true, HelpMessage = "The name of the resource group where the image template is deployed")]
