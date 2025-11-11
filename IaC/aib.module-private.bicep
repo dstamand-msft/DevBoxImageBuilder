@@ -168,9 +168,9 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
         type: 'PowerShell'
         name: 'Move the Entrypoint, Exitpoint and Deprovisioning scripts to the installers folder'
         inline: [
-          'Move-Item -Path "C:\\installers\\scripts\\Entrypoint.ps1" -Destination "C:\\installers\\" -Force'
-          'Move-Item -Path "C:\\installers\\scripts\\Exitpoint.ps1" -Destination "C:\\installers\\" -Force'
-          'Move-Item -Path "C:\\installers\\scripts\\DeprovisioningScript.ps1" -Destination "C:\\" -Force'
+          'Move-Item -Path "C:\\installers\\artifacts\\scripts\\Entrypoint.ps1" -Destination "C:\\installers\\" -Force'
+          'Move-Item -Path "C:\\installers\\artifacts\\scripts\\Exitpoint.ps1" -Destination "C:\\installers\\" -Force'
+          'Move-Item -Path "C:\\installers\\artifacts\\scripts\\DeprovisioningScript.ps1" -Destination "C:\\" -Force'
         ]
       }
       {
