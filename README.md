@@ -111,6 +111,11 @@ The logs are located in the storage account in the staging resource group, under
 
 If you make a change to the files that are specified in the customizers section of the template, you will need to delete the template and recreate it. This is because Azure Image Builder creates a copy of those files in the staging resource group.
 
+## Considerations
+
+Azure Image Builder (AIB) does not currently support service endpoints or private endpoints by design. This means that instead of using the **File customizer**, which is used by the service to create a copy of the files in the staging resoure group storage account upon provisioning, the build virtual machine must retrieve these files through a private endpoint.
+To enable this secure access, the _aib.module-private.bicep_ module handles the necessary configuration.
+
 ## Customization examples
 
 See the Scripts/Examples folder

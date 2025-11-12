@@ -16,6 +16,9 @@ param vmSkuSize string = 'Standard_D4s_v3'
 @description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
 param subnetId string = ''
 
+@description('(Optional) The name of the subnet where the container instance will be deployed. This subnet must allow outbound access to the Internet and to the subnet specified in subnetId and be delegated to the ACI service so that it can be used to deploy ACI resources. The subnet in property subnetId must allow inbound access from this subnet. See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=bicep%2Cazure-powershell#containerinstancesubnetid-optional')
+param containerInstanceSubnetId string = ''
+
 @description('The resource identifier of the user assigned identity for the Image builder VM. The user assigned identity for Azure Image Builder must have the "Managed Identity Operator" role assignment on all the user assigned identities for Azure Image Builder to be able to associate them to the build VM.')
 param imageBuilderVMUserAssignedIdentityId string
 
@@ -77,9 +80,10 @@ var exitPointInlineScript = !empty(keyVaultName)
   ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
   : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
-var vnetConfig = !empty(subnetId)
+var vnetConfig = !empty(subnetId) && !empty(containerInstanceSubnetId)
   ? {
       subnetId: subnetId
+      containerInstanceSubnetId: containerInstanceSubnetId
     }
   : null
 
@@ -126,36 +130,47 @@ resource imageTemplate 'Microsoft.VirtualMachineImages/imageTemplates@2024-02-01
     source: imageSource
     customize: [
       {
-        type: 'File'
-        name: 'Download the download artifacts script'
-        destination: 'C:\\installers\\DownloadArtifacts.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/DownloadArtifacts.ps1'
-      }
-      {
-        type: 'File'
-        name: 'Download the entrypoint script'
-        destination: 'C:\\installers\\Entrypoint.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/Entrypoint.ps1'
-      }
-      {
-        type: 'File'
-        name: 'Download the exitpoint script'
-        destination: 'C:\\installers\\Exitpoint.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/Exitpoint.ps1'
-      }
-      {
-        type: 'File'
-        // see https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=json%2Cazure-powershell#generalize for more information
-        // remove this customizer the moment the default sysprep command is fixed on the Azure platform in the Azure Image Builder service
-        name: 'Override the built-in deprovisioning script as WindowsAzureTelemetryAgent was removed and combined into WindowsAzureGuestAgent'
-        destination: 'C:\\DeprovisioningScript.ps1'
-        sourceUri: '${storageAccountBlobEndpoint}${scriptsContainerName}/DeprovisioningScript.ps1'
+        type: 'PowerShell'
+        name: 'Download the DownloadArtifacts.ps1 script'
+        inline: [
+          '$storageAccountUrl = "${storageAccountBlobEndpoint}"'
+          '$containerName = "${scriptsContainerName}"'
+          '$blobName = "DownloadArtifacts.ps1"'
+          '$resource = "https://storage.azure.com/"'
+          '$apiVersion = "2018-02-01"'
+          '$msiResId = "${imageBuilderVMUserAssignedIdentityId}"'
+
+          '# Get the access token from the managed identity endpoint'
+          '$tokenResponse = Invoke-RestMethod -Method GET -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=$apiVersion&resource=$resource&msi_res_id=$msiResId" -Headers @{Metadata="true"}'
+          '$accessToken = $tokenResponse.access_token'
+
+          '$blobUrl = "$storageAccountUrl$containerName/$blobName"'
+
+          '# Download the blob using the access token'
+          '$headers = @{'
+          '  Authorization = "Bearer $accessToken"'
+          '  "x-ms-version" = "2025-11-05"'
+          '  "x-ms-date" = (Get-Date -Format "R")'
+          '}'
+
+          'New-Item -Path "C:\\installers" -ItemType Directory -Force | Out-Null'
+          'Invoke-WebRequest -Uri $blobUrl -Headers $headers -OutFile "C:\\installers\\$blobName"'
+        ]
       }
       {
         type: 'PowerShell'
         name: 'Run the download artifacts script'
         inline: [
           '& "C:\\installers\\DownloadArtifacts.ps1" -SubscriptionId ${subscriptionId} -IdentityClientId ${imageBuilderVMUserAssignedIdentityClientId} -StorageAccountName ${storageAccountName} -ArtifactsMetadataPath ${artifactsMetadataPath}'
+        ]
+      }
+      {
+        type: 'PowerShell'
+        name: 'Move the Entrypoint, Exitpoint and Deprovisioning scripts to the installers folder'
+        inline: [
+          'Move-Item -Path "C:\\installers\\artifacts\\scripts\\Entrypoint.ps1" -Destination "C:\\installers\\" -Force'
+          'Move-Item -Path "C:\\installers\\artifacts\\scripts\\Exitpoint.ps1" -Destination "C:\\installers\\" -Force'
+          'Move-Item -Path "C:\\installers\\artifacts\\scripts\\DeprovisioningScript.ps1" -Destination "C:\\" -Force'
         ]
       }
       {

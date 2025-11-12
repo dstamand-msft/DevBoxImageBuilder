@@ -21,6 +21,9 @@ param imageDefinitionName string
 @description('The object representing the identifier properties of the image definition')
 param galleryImageIdentifier galleryImageIdentifierType
 
+@description('Whether the Azure Image Builder will use a subnet for the build VM')
+param isUsingSubnetForAIB bool = false
+
 @description('Whether to enable soft delete on the image gallery')
 param softDeleteOnGallery bool = false
 
@@ -108,7 +111,7 @@ resource azureImageBuilderInjectandDistributeRoleDef 'Microsoft.Authorization/ro
   }
 }
 
-resource storageBlobDataReaderRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource storageBlobDataReaderRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (isUsingSubnetForAIB) {
   name: guid(storageAccount.id, userImgBuilderIdentity.id, 'Storage Blob Data Reader')
   scope: storageAccount
   properties: {

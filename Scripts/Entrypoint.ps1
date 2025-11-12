@@ -18,19 +18,17 @@ SOFTWARE
 param(
     [Parameter(Mandatory = $true, HelpMessage = "The subscription where to connect to. It is required for customization scripts that need to connect to Azure resources, in case you need to use Azure CmdLets.")]
     [string]$SubscriptionId,    
-    [Parameter(HelpMessage = "(Optional) The name of the key vault where the secrets are stored")]
-    [string]$KeyVaultName,
-    [Parameter(HelpMessage = "(Optional) The secret names to pass to the customization scripts")]
-    [Array]$SecretNames
+    [Parameter(HelpMessage = "(Optional) The name of the key vault where the secrets, certificates and keys are stored. Use the KeyVault Az Module to interact with the Key Vault from within the customization scripts.")]
+    [string]$KeyVaultName
 )
 
 $InformationPreference = "Continue"
 
 Write-Verbose "[Entrypoint] Executing the customizations"
     # call your sub customization scripts here with arguments as necessary such as:
-    # -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
+    # -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName
     # example:
-    # & 'C:\installers\artifacts\customization-scripts\ScriptA.ps1' -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName -SecretNames $SecretNames
+    # & 'C:\installers\artifacts\customization-scripts\ScriptA.ps1' -SubscriptionId $SubscriptionId -KeyVaultName $KeyVaultName
 # add any customizations here that should be ran regardless of the image type
 
 try{
