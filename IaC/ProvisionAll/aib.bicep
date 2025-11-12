@@ -88,9 +88,6 @@ param imageTags object = {}
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
-@description('(Optional) The secret names to be fetch from the keyvault and passed to the entrypoint script.')
-param secretNames array = []
-
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: resourceGroupName
   location: location
