@@ -112,10 +112,10 @@ resource azureImageBuilderInjectandDistributeRoleDef 'Microsoft.Authorization/ro
 }
 
 resource storageBlobDataReaderRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (isUsingSubnetForAIB) {
-  name: guid(storageAccount.id, userImgBuilderIdentity.id, 'Storage Blob Data Reader')
+  name: guid(storageAccount.id, userImgBuilderIdentity.id, 'Storage Blob Data Contributor')
   scope: storageAccount
   properties: {
-    // contributor because of the fact that we need to programmatically upload files to the storage account upon deployment
+    // contributor because of the fact that we need to programmatically upload files to the storage account upon deployment (see deploymentScript resource)
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', rbacRoles.storageBlobDataContributor)
     principalId: userImgBuilderIdentity.properties.principalId
     principalType: 'ServicePrincipal'
@@ -253,5 +253,5 @@ output userImgBuilderIdentityIdResourceId string = userImgBuilderIdentity.id
 output userImgBuilderIdentityPrincipalId string = userImgBuilderIdentity.properties.principalId
 output vmImgBuilderIdentityResourceId string = vmImgBuilderIdentity.id
 output vmImgBuilderIdentityClientId string = vmImgBuilderIdentity.properties.clientId
-output StorageAccountPrimaryEndpointsBlob string = storageAccount.properties.primaryEndpoints.blob
+output storageAccountPrimaryEndpointsBlob string = storageAccount.properties.primaryEndpoints.blob
 output galleryImageResourceId string = galleryImage.id

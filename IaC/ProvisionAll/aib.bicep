@@ -133,7 +133,7 @@ module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId
     onCustomizerError: onCustomizerError
     onValidationError: onValidationError
     buildTimeoutInMinutes: buildTimeoutInMinutes
-    storageAccountBlobEndpoint: associatedResources.outputs.StorageAccountPrimaryEndpointsBlob
+    storageAccountBlobEndpoint: associatedResources.outputs.storageAccountPrimaryEndpointsBlob
     galleryImageId: associatedResources.outputs.galleryImageResourceId
     imageReplicationRegions: imageReplicationRegions
     subscriptionId: subscriptionId
@@ -163,7 +163,7 @@ module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empt
     onCustomizerError: onCustomizerError
     onValidationError: onValidationError
     buildTimeoutInMinutes: buildTimeoutInMinutes
-    storageAccountBlobEndpoint: associatedResources.outputs.StorageAccountPrimaryEndpointsBlob
+    storageAccountBlobEndpoint: associatedResources.outputs.storageAccountPrimaryEndpointsBlob
     galleryImageId: associatedResources.outputs.galleryImageResourceId
     imageReplicationRegions: imageReplicationRegions
     subscriptionId: subscriptionId

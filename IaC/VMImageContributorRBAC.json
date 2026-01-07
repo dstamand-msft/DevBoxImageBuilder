@@ -1,0 +1,26 @@
+{
+    "properties": {
+        "roleName": "Custom role Virtual Machine Images Contributor",
+        "description": "Allows for read, write, delete on Virtual Machines Images template along with deploying them",
+        "assignableScopes": [
+            "/subscriptions/<subscription_id>/resourceGroups/<resource_group_name>"
+        ],
+        "permissions": [
+            {
+                "actions": [
+                    "Microsoft.Resources/deployments/write",
+                    "Microsoft.Resources/deployments/whatIf/action",
+                    "Microsoft.Resources/deployments/operations/read",
+                    "Microsoft.Resources/deployments/operationstatuses/read",
+                    "Microsoft.Resources/deployments/read",
+                    "Microsoft.VirtualMachineImages/imageTemplates/read",
+                    "Microsoft.VirtualMachineImages/imageTemplates/write",
+                    "Microsoft.VirtualMachineImages/imageTemplates/delete"
+                ],
+                "notActions": [],
+                "dataActions": [],
+                "notDataActions": []
+            }
+        ]
+    }
+}

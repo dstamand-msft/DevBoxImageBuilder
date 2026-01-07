@@ -1,5 +1,5 @@
 {
-    "Name": "Azure Image Builder Image Gallery Distribute Role",
+    "Name": "Custom Role Azure Image Builder Image Gallery Distribute",
     "Description": "Allows an identity to inject the images and distribute them to a Shared Image Gallery.",
     "IsCustom": true,
     "AssignableScopes": [
