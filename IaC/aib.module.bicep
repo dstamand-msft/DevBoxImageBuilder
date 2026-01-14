@@ -73,11 +73,11 @@ param tags object = {}
 @description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
-var entryPointInlineScript = !empty(keyVaultName)
-  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
+var entryPointInlineScript = !empty(keyVaultName) && !empty(keyVaultSecretNames)
+  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -KeyVaultSecretName ${join(keyVaultSecretNames, ',')} -Verbose'
   : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
-var exitPointInlineScript = !empty(keyVaultName)
-  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
+var exitPointInlineScript = !empty(keyVaultName) && !empty(keyVaultSecretNames)
+  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -KeyVaultSecretName ${join(keyVaultSecretNames, ',')} -Verbose'
   : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
 var vnetConfig = !empty(subnetId)
