@@ -81,6 +81,12 @@ param subscriptionId string
 @description('The path to the artifacts metadata file in the storage account.')
 param artifactsMetadataPath string
 
+@description('(Optional) The name of the key vault where the secrets are stored.')
+param keyVaultName string = ''
+
+@description('(Optional) The names of the secrets stored in the key vault that you want to retrieve.')
+param keyVaultSecretNames array = []
+
 @description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 
@@ -112,9 +118,6 @@ resource galleryImage 'Microsoft.Compute/galleries/images@2022-03-03' existing =
   parent: gallery
 }
 
-@description('(Optional) The name of the key vault where the secrets are stored.')
-param keyVaultName string = ''
-
 module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId)){
   name: imageTemplateName
   scope: resourceGroup(resourceGroupName)
@@ -141,6 +144,7 @@ module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId
     tags: tags
     imageTags: imageTags
     keyVaultName: keyVaultName
+    keyVaultSecretNames: keyVaultSecretNames
   }
 }
 
@@ -171,6 +175,7 @@ module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empt
     tags: tags
     imageTags: imageTags
     keyVaultName: keyVaultName
+    keyVaultSecretNames: keyVaultSecretNames
   }
 }
 

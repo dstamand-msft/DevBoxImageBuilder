@@ -64,6 +64,9 @@ param artifactsMetadataPath string
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
+@description('(Optional) The names of the secrets stored in the key vault that you want to retrieve.')
+param keyVaultSecretNames array = []
+
 @description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 

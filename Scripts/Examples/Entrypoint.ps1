@@ -19,7 +19,9 @@ param(
     [Parameter(Mandatory = $true, HelpMessage = "The subscription where to connect to. It is required for customization scripts that need to connect to Azure resources, in case you need to use Azure CmdLets.")]
     [string]$SubscriptionId,    
     [Parameter(HelpMessage = "(Optional) The name of the key vault where the secrets, certificates and keys are stored. Use the KeyVault Az Module to interact with the Key Vault from within the customization scripts.")]
-    [string]$KeyVaultName
+    [string]$KeyVaultName,
+    [Parameter(HelpMessage = "(Optional) The names of the secrets stored in the key vault that you want to retrieve.")]
+    [string[]]$KeyVaultSecretNames    
 )
 
 $InformationPreference = "Continue"

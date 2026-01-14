@@ -88,6 +88,9 @@ param imageTags object = {}
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
+@description('(Optional) The names of the secrets stored in the key vault that you want to retrieve.')
+param keyVaultSecretNames array = []
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: resourceGroupName
   location: location
@@ -142,6 +145,7 @@ module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId
     tags: tags
     imageTags: imageTags
     keyVaultName: keyVaultName
+    keyVaultSecretNames: keyVaultSecretNames
   }
 }
 
@@ -172,6 +176,7 @@ module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empt
     tags: tags
     imageTags: imageTags
     keyVaultName: keyVaultName
+    keyVaultSecretNames: keyVaultSecretNames
   }
 }
 

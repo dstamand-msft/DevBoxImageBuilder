@@ -65,7 +65,7 @@
     "keyVaultName": {
       "value": "<value>"
     },
-    "secretNames": {
+    "keyVaultSecretNames": {
       "value": []
     },
     "tags": {

@@ -67,17 +67,20 @@ param artifactsMetadataPath string
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
 
+@description('(Optional) The names of the secrets stored in the key vault that you want to retrieve.')
+param keyVaultSecretNames array = []
+
 @description('(Optional) The tags to be associated with the image template.')
 param tags object = {}
 
 @description('(Optional) The tags to be associated with the image that will be created by the image template.')
 param imageTags object = {}
 
-var entryPointInlineScript = !empty(keyVaultName)
-  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
+var entryPointInlineScript = !empty(keyVaultName) && !empty(keyVaultSecretNames)
+  ? '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -KeyVaultSecretName ${join(keyVaultSecretNames, ',')} -Verbose'
   : '& "C:\\installers\\Entrypoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
-var exitPointInlineScript = !empty(keyVaultName)
-  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -Verbose'
+var exitPointInlineScript = !empty(keyVaultName) && !empty(keyVaultSecretNames)
+  ? '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -KeyVaultName ${keyVaultName} -KeyVaultSecretName ${join(keyVaultSecretNames, ',')} -Verbose'
   : '& "C:\\installers\\Exitpoint.ps1" -SubscriptionId ${subscriptionId} -Verbose'
 
 var vnetConfig = !empty(subnetId) && !empty(containerInstanceSubnetId)
