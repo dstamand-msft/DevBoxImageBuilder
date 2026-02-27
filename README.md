@@ -86,6 +86,18 @@ You may want to add the `sha256Checksum` property to the customizers in `aib.mod
 (Get-FileHash -Path .\Scripts\DownloadArtifacts.ps1 -Algorithm Sha256).Hash
 ```
 
+## Networking modes
+
+The `IaC/ProvisionAll/aib.bicep` template supports three networking modes, automatically inferred from the `subnetId` and `virtualNetworkName` parameters:
+
+| Mode | `subnetId` | `virtualNetworkName` | Behavior |
+|---|---|---|---|
+| **No VNet (public)** | _(empty)_ | _(empty)_ | No networking is provisioned. The image template uses the public storage module (`aib.module.bicep`) without any VNet integration. |
+| **Bring-your-own VNet** | provided | _(ignored)_ | You supply your own subnet IDs. The `subnetId` and `containerInstanceSubnetId` parameters are passed directly to the private storage module (`aib.module-private.bicep`). The `networking.bicep` module is **not** deployed. |
+| **Provision VNet** | _(empty)_ | provided | The `networking.bicep` module is deployed to create a full VNet with subnets, NAT gateways, NSGs, Azure Bastion, and a private endpoint for blob storage. The VM builder and ACI subnet IDs are automatically inferred from the networking module outputs. |
+
+> **Note:** When `subnetId` is provided, `virtualNetworkName` is ignored — bring-your-own VNet always takes precedence.
+
 ## Deployment
 
 You can deploy this solution using 3 ways:
@@ -99,7 +111,7 @@ Bring your own resources:
 New-AzResourceGroupDeployment -ResourceGroupName <your_resource_group> -TemplateParameterFile /path/to/aib-parameters.jsonc -TemplateFile /path/to/IaC/BringYourOwnResources/aib.bicep -Verbose
 ```
 
-Full:
+Full (provision networking):
 ```PowerShell
 New-AzDeployment -Location CanadaCentral -Name <your_deployment_name> -TemplateParameterFile /path/to/aib.parameters.json -TemplateFile /path/to/IaC/ProvisionAll\aib.bicep -Verbose
 ```

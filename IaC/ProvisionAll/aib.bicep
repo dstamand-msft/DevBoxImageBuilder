@@ -50,11 +50,17 @@ param imageSource object
 @description('	Size of the virtual machine used to build, customize and capture images.')
 param vmSkuSize string = 'Standard_D4s_v3'
 
-@description('(Optional) The name of the subnet where the virtual machine will be deployed. This is useful if you need to access private resources or on-premises resources.')
+@description('(Optional) The name of the subnet where the virtual machine will be deployed. When provided, it indicates that you are bringing your own virtual network. When empty and virtualNetworkName is provided, the networking.bicep module provisions all networking resources and the subnet IDs are inferred from its outputs.')
 param subnetId string = ''
 
-@description('(Optional) The name of the subnet where the container instance will be deployed. This subnet must allow outbound access to the Internet and to the subnet specified in subnetId and be delegated to the ACI service so that it can be used to deploy ACI resources. The subnet in property subnetId must allow inbound access from this subnet. See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=bicep%2Cazure-powershell#containerinstancesubnetid-optional')
+@description('(Optional) The name of the subnet where the container instance will be deployed. Used when subnetId is provided (bring-your-own VNet). This subnet must allow outbound access to the Internet and to the subnet specified in subnetId and be delegated to the ACI service so that it can be used to deploy ACI resources. The subnet in property subnetId must allow inbound access from this subnet. See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=bicep%2Cazure-powershell#containerinstancesubnetid-optional')
 param containerInstanceSubnetId string = ''
+
+@description('(Optional) The name of the virtual network to create. Required when subnetId is not provided and you want the networking module to provision all networking resources.')
+param virtualNetworkName string = ''
+
+@description('(Optional) List of CIDR ranges allowed to connect to Azure Bastion on port 443. Defaults to all Internet traffic. Used only when virtualNetworkName is provided.')
+param bastionAllowedCIDRs array = []
 
 @description('(Optional) The staging resource group name that will be in the same subscription as the image template that will be used to build the image. If this field is empty, a resource group with a random name will be created. If the resource group specified in this field doesn\'t exist, it will be created with the same name. If the resource group specified exists, it must be empty and in the same region as the image template. The resource group created will be deleted during template deletion if this field is empty or the resource group specified doesn\'t exist, but if the resource group specified exists the resources created in the resource group will be deleted during template deletion and the resource group itself will remain. The user identity deploying the template needs to have Owner role assignment to this resource group. Each image template requires its own staging resource group.')
 param stagingResourceGroupName string = ''
@@ -91,6 +97,16 @@ param keyVaultName string = ''
 @description('(Optional) The names of the secrets stored in the key vault that you want to retrieve.')
 param keyVaultSecretNames array = []
 
+// Determine whether to use a VNet (either bring-your-own or provisioned)
+var usePrivateNetworking = !empty(subnetId) || !empty(virtualNetworkName)
+var provisionNetworking = empty(subnetId) && !empty(virtualNetworkName)
+
+// When subnetId is provided (BYOV), use the provided parameters; otherwise, use the networking module outputs
+var effectiveSubnetId = !empty(subnetId) ? subnetId : (provisionNetworking ? networking!.outputs.vmBuilderSubnetId : '')
+var effectiveContainerInstanceSubnetId = !empty(subnetId)
+  ? containerInstanceSubnetId
+  : (provisionNetworking ? networking!.outputs.aciSubnetId : '')
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: resourceGroupName
   location: location
@@ -99,6 +115,18 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
 resource stagingResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = if (!empty(stagingResourceGroupName)) {
   name: stagingResourceGroupName
   location: location
+}
+
+module networking 'networking.bicep' = if (provisionNetworking) {
+  name: 'networking'
+  scope: resourceGroup
+  params: {
+    location: location
+    virtualNetworkName: virtualNetworkName
+    storageAccountName: storageAccountName
+    tags: tags
+    bastionAllowedCIDRs: bastionAllowedCIDRs
+  }
 }
 
 module associatedResources 'associatedresources.module.bicep' = {
@@ -115,11 +143,11 @@ module associatedResources 'associatedresources.module.bicep' = {
     galleryImageIdentifier: galleryImageIdentifier
     softDeleteOnGallery: softDeleteOnGallery
     userIdentityName: userIdentityName
-    isUsingSubnetForAIB: !empty(subnetId)
+    isUsingSubnetForAIB: usePrivateNetworking
   }
 }
 
-module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId)) {
+module imageTemplateWithPublicStorage '../aib.module.bicep' = if (!usePrivateNetworking) {
   name: imageTemplateName
   scope: resourceGroup
   params: {
@@ -131,7 +159,7 @@ module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId
     imageBuilderVMUserAssignedIdentityClientId: associatedResources.outputs.vmImgBuilderIdentityClientId
     imageSource: imageSource
     vmSkuSize: vmSkuSize
-    subnetId: subnetId
+    subnetId: effectiveSubnetId
     stagingResourceGroupId: stagingResourceGroup.id
     onCustomizerError: onCustomizerError
     onValidationError: onValidationError
@@ -149,7 +177,7 @@ module imageTemplateWithPublicStorage '../aib.module.bicep' = if (empty(subnetId
   }
 }
 
-module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empty(subnetId)) {
+module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (usePrivateNetworking) {
   name: imageTemplateName
   scope: resourceGroup
   params: {
@@ -161,8 +189,8 @@ module imageTemplateWithPrivateStorage '../aib.module-private.bicep' = if (!empt
     imageBuilderVMUserAssignedIdentityClientId: associatedResources.outputs.vmImgBuilderIdentityClientId
     imageSource: imageSource
     vmSkuSize: vmSkuSize
-    subnetId: subnetId
-    containerInstanceSubnetId: containerInstanceSubnetId
+    subnetId: effectiveSubnetId
+    containerInstanceSubnetId: effectiveContainerInstanceSubnetId
     stagingResourceGroupId: stagingResourceGroup.id
     onCustomizerError: onCustomizerError
     onValidationError: onValidationError

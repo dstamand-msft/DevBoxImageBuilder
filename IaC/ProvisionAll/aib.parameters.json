@@ -51,6 +51,15 @@
     "subnetId": {
       "value": "<value>"
     },
+    "containerInstanceSubnetId": {
+      "value": "<value>"
+    },
+    "virtualNetworkName": {
+      "value": "<value>"
+    },
+    "bastionAllowedCIDRs": {
+      "value": []
+    },
     "stagingResourceName":{
       "value": "<value>"
     },
