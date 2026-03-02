@@ -21,9 +21,6 @@ param imageDefinitionName string
 @description('The object representing the identifier properties of the image definition')
 param galleryImageIdentifier galleryImageIdentifierType
 
-@description('Whether the Azure Image Builder will use a subnet for the build VM')
-param isUsingSubnetForAIB bool = false
-
 @description('Whether to enable soft delete on the image gallery')
 param softDeleteOnGallery bool = false
 
@@ -33,11 +30,17 @@ param scriptsContainerName string = 'scripts'
 @description('The storage account container name where the apps to run on the build vm are stored')
 param appsContainerName string = 'apps'
 
+@description('Whether to pre-populate the storage account with example scripts for building images')
+param prepopulateStorageWithExampleScripts bool = true
+
+@description('Whether to disable public network access on the storage account. When true, the storage account is only accessible via private endpoints.')
+param disablePublicNetworkAccess bool = false
+
 @description('The Azure CLI version to use for the deploymentScripts resource')
 param azCliVersion string = '2.75.0'
 
-// @description('UTC timestamp used to create distinct deployment scripts for each deployment')
-// param utcValue string = utcNow()
+@description('UTC timestamp used to create distinct deployment scripts for each deployment')
+param utcValue string = utcNow()
 
 var rbacRoles = loadJsonContent('../rbacRoleIds.json')
 
@@ -52,6 +55,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' = {
     accessTier: 'Cool'
     minimumTlsVersion: 'TLS1_2'
     allowSharedKeyAccess: false
+    publicNetworkAccess: disablePublicNetworkAccess ? 'Disabled' : 'Enabled'
   }
 }
 
@@ -111,7 +115,7 @@ resource azureImageBuilderInjectandDistributeRoleDef 'Microsoft.Authorization/ro
   }
 }
 
-resource storageBlobDataReaderRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (isUsingSubnetForAIB) {
+resource storageBlobDataReaderRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (prepopulateStorageWithExampleScripts) {
   name: guid(storageAccount.id, userImgBuilderIdentity.id, 'Storage Blob Data Contributor')
   scope: storageAccount
   properties: {
@@ -189,8 +193,15 @@ resource galleryImage 'Microsoft.Compute/galleries/images@2024-03-03' = {
   }
 }
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = {
-name: 'deployscript-upload-blob'
+// The deploymentScripts resource creates a temporary storage account (managed by the platform) that requires
+// allowSharedKeyAccess to be enabled because Azure Container Instances (ACI) can only mount file shares via access keys.
+// See https://learn.microsoft.com/azure/azure-resource-manager/bicep/deployment-script-bicep#use-existing-storage-accounts
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = if (prepopulateStorageWithExampleScripts) {
+#disable-next-line use-stable-resource-identifiers
+  name: 'deployscript-upload-blob-${utcValue}'
+  dependsOn: [
+    storageBlobDataReaderRBACAIBIdentity
+  ]
   location: location
   kind: 'AzureCLI'
   identity: {
@@ -198,6 +209,9 @@ name: 'deployscript-upload-blob'
     userAssignedIdentities: {
       '${userImgBuilderIdentity.id}': {}
     }
+  }
+  tags: {
+    SecurityControl: 'Ignore'
   }
   properties: {
     azCliVersion: azCliVersion

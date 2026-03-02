@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "<value>"
+    },
+    "virtualNetworkName": {
+      "value": "<value>"
+    },
+    // defaults to the resource group of the deployment if not provided
+    "virtualNetworkResourceGroupName": {
+      "value": "<value>"
+    },
+    "subnetName": {
+      "value": "VMBuilderSubnet"
+    },
+    "vmName": {
+      "value": "<value>"
+    },
+    "vmSize": {
+      "value": "Standard_D4s_v3"
+    },
+    // needs to be passed by the cmdLine params due to @secure()
+    // "adminPassword": {
+    //   "value": "<value>"
+    // },
+    "imageReference": {
+      "value": {
+        "publisher": "MicrosoftWindowsDesktop",
+        "offer": "windows-11",
+        "sku": "win11-25h2-ent",
+        "version": "latest"
+      }
+    },
+    "osDiskType": {
+      "value": "StandardSSD_LRS"
+    },
+    "enableBootDiagnostics": {
+      "value": false
+    },
+    "tags": {
+      "value": {}
+    }
+  }
+}

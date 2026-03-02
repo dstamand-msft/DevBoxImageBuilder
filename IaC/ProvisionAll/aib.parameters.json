@@ -75,6 +75,9 @@
     "keyVaultSecretNames": {
       "value": []
     },
+    "prepopulateStorageWithExampleScripts":{
+      "value": true
+    },
     "tags": {
       "value": {
         "initiatedBy": "<value>"

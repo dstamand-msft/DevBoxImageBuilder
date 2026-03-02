@@ -13,6 +13,13 @@ param tags object = {}
 @description('List of CIDR ranges allowed to connect to Azure Bastion on port 443. Defaults to all Internet traffic.')
 param bastionAllowedCIDRs array = []
 
+@description('The SKU of the Azure Bastion host. Developer SKU is free-tier and does not require a public IP or dedicated subnet, but should NOT be used in production.')
+@allowed(['Basic', 'Standard', 'Developer'])
+param bastionSkuName string = 'Basic'
+
+@description('Whether to deploy an Azure Bastion host. When false, the Bastion host, its NSG, and the AzureBastionSubnet are not created.')
+param deployBastion bool = true
+
 var vmImageBuilderSubnetAddressPrefix = '10.0.0.0/28'
 var aciSubnetAddressPrefix = '10.0.0.16/28'
 var adoManagedPoolSubnetAddressPrefix = '10.0.0.32/28'
@@ -112,7 +119,7 @@ module nsgImageBuilder 'br/public:avm/res/network/network-security-group:0.5.2' 
         properties: {
           protocol: 'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '3389'
+          destinationPortRange: '443'
           sourceAddressPrefixes: [
             vmImageBuilderSubnetAddressPrefix
             adoManagedPoolSubnetAddressPrefix
@@ -129,11 +136,11 @@ module nsgImageBuilder 'br/public:avm/res/network/network-security-group:0.5.2' 
         properties: {
           protocol: 'Tcp'
           sourcePortRange: '*'
-          destinationPortRange: '3389'
+          destinationPortRange: '5986'
           sourceAddressPrefix: aciSubnetAddressPrefix
           destinationAddressPrefix: vmImageBuilderSubnetAddressPrefix
           access: 'Allow'
-          priority: 100
+          priority: 200
           direction: 'Inbound'
           description: 'Allow connectivity for WinRM for HTTPS'
         }
@@ -144,11 +151,21 @@ module nsgImageBuilder 'br/public:avm/res/network/network-security-group:0.5.2' 
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '3389'
-          sourceAddressPrefix: devboxManagementSubnetAddressPrefix
+          // Developer SKU Bastion connects from the Azure platform IP (168.63.129.16), not the Bastion subnet
+          sourceAddressPrefixes: !deployBastion ? [
+            devboxManagementSubnetAddressPrefix
+          ] : bastionSkuName == 'Developer' ? [
+            devboxManagementSubnetAddressPrefix
+            '168.63.129.16/32'
+          ] : [
+            devboxManagementSubnetAddressPrefix
+            azureBastionSubnetAddressPrefix
+          ]
           destinationAddressPrefix: vmImageBuilderSubnetAddressPrefix
           access: 'Allow'
-          priority: 102
+          priority: 201
           direction: 'Inbound'
+          description: 'Allow SSH and RDP from Bastion subnet, DevBox subnet'
         }
       }
       {
@@ -169,7 +186,8 @@ module nsgImageBuilder 'br/public:avm/res/network/network-security-group:0.5.2' 
 }
 
 // NSG for Azure Bastion - see https://learn.microsoft.com/azure/bastion/bastion-nsg
-module nsgBastion 'br/public:avm/res/network/network-security-group:0.5.2' = {
+// Not needed for Developer SKU (no dedicated subnet) or when Bastion is not deployed
+module nsgBastion 'br/public:avm/res/network/network-security-group:0.5.2' = if (deployBastion && bastionSkuName != 'Developer') {
   params: {
     name: 'nsg-bastion'
     location: location
@@ -364,12 +382,12 @@ resource privateEndpointsSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-
   ]
 }
 
-resource azureBastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' = {
+resource azureBastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-01' = if (deployBastion && bastionSkuName != 'Developer') {
   name: '${virtualNetworkName}/AzureBastionSubnet'
   properties: {
     addressPrefix: azureBastionSubnetAddressPrefix
     networkSecurityGroup: {
-      id: nsgBastion.outputs.resourceId
+      id: nsgBastion!.outputs.resourceId
     }
   }
   dependsOn: [
@@ -377,16 +395,17 @@ resource azureBastionSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-05-0
   ]
 }
 
-// Azure Bastion host with its own public IP (managed by the AVM module)
-module bastionHost 'br/public:avm/res/network/bastion-host:0.8.2' = {
+// Azure Bastion host — Developer SKU does not require a public IP or a dedicated AzureBastionSubnet.
+module bastionHost 'br/public:avm/res/network/bastion-host:0.8.2' = if (deployBastion) {
   params: {
     name: 'bas-${virtualNetworkName}'
     location: location
     tags: tags
     virtualNetworkResourceId: virtualNetwork.outputs.resourceId
-    publicIPAddressObject: {
+    publicIPAddressObject: bastionSkuName != 'Developer' ? {
       name: 'pip-bastion'
-    }
+    } : null
+    skuName: bastionSkuName
   }
   dependsOn: [
     azureBastionSubnet
@@ -399,6 +418,9 @@ resource devboxManagementSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-
     addressPrefix: devboxManagementSubnetAddressPrefix
   }
   dependsOn: [
+    // Keep the subnet chain serial to avoid concurrent VNet modifications.
+    // When azureBastionSubnet is skipped, the dependency falls through to privateEndpointsSubnet.
+    privateEndpointsSubnet
     azureBastionSubnet
   ]
 }
