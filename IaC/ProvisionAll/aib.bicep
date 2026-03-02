@@ -50,24 +50,24 @@ param imageSource object
 @description('	Size of the virtual machine used to build, customize and capture images.')
 param vmSkuSize string = 'Standard_D4s_v3'
 
+@description('(Optional) The name of the virtual network to create. Required when subnetId is not provided and you want the networking module to provision all networking resources.')
+param virtualNetworkName string = ''
+
 @description('(Optional) The name of the subnet where the virtual machine will be deployed. When provided, it indicates that you are bringing your own virtual network. When empty and virtualNetworkName is provided, the networking.bicep module provisions all networking resources and the subnet IDs are inferred from its outputs.')
 param subnetId string = ''
 
 @description('(Optional) The name of the subnet where the container instance will be deployed. Used when subnetId is provided (bring-your-own VNet). This subnet must allow outbound access to the Internet and to the subnet specified in subnetId and be delegated to the ACI service so that it can be used to deploy ACI resources. The subnet in property subnetId must allow inbound access from this subnet. See https://learn.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json?tabs=bicep%2Cazure-powershell#containerinstancesubnetid-optional')
 param containerInstanceSubnetId string = ''
 
-@description('(Optional) The name of the virtual network to create. Required when subnetId is not provided and you want the networking module to provision all networking resources.')
-param virtualNetworkName string = ''
-
-@description('(Optional) List of CIDR ranges allowed to connect to Azure Bastion on port 443. Defaults to all Internet traffic. Used only when virtualNetworkName is provided.')
-param bastionAllowedCIDRs array = []
+@description('(Optional) Whether to deploy an Azure Bastion host. When false, the Bastion host, its NSG, and the AzureBastionSubnet are not created. Used only when virtualNetworkName is provided.')
+param deployBastion bool = false
 
 @description('(Optional) The SKU of the Azure Bastion host. Developer SKU is free-tier and does not require a public IP or dedicated subnet, but should NOT be used in production. Used only when virtualNetworkName is provided.')
 @allowed(['Basic', 'Standard', 'Developer'])
 param bastionSkuName string = 'Basic'
 
-@description('(Optional) Whether to deploy an Azure Bastion host. When false, the Bastion host, its NSG, and the AzureBastionSubnet are not created. Used only when virtualNetworkName is provided.')
-param deployBastion bool = true
+@description('(Optional) List of CIDR ranges allowed to connect to Azure Bastion on port 443. Defaults to all Internet traffic. Used only when virtualNetworkName is provided.')
+param bastionAllowedCIDRs array = []
 
 @description('(Optional) The staging resource group name that will be in the same subscription as the image template that will be used to build the image. If this field is empty, a resource group with a random name will be created. If the resource group specified in this field doesn\'t exist, it will be created with the same name. If the resource group specified exists, it must be empty and in the same region as the image template. The resource group created will be deleted during template deletion if this field is empty or the resource group specified doesn\'t exist, but if the resource group specified exists the resources created in the resource group will be deleted during template deletion and the resource group itself will remain. The user identity deploying the template needs to have Owner role assignment to this resource group. Each image template requires its own staging resource group.')
 param stagingResourceGroupName string = ''
@@ -99,7 +99,7 @@ param tags object = {}
 param imageTags object = {}
 
 @description('Whether to pre-populate the storage account with example scripts for building images. When true, the deployment script uploads the example Entrypoint, Exitpoint, DeprovisioningScript, DownloadArtifacts and artifactsmetadata files to the scripts container.')
-param prepopulateStorageWithExampleScripts bool = true
+param prepopulateStorageWithExampleScripts bool = false
 
 @description('(Optional) The name of the key vault where the secrets are stored.')
 param keyVaultName string = ''
