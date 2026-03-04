@@ -15,7 +15,13 @@
                     "Microsoft.Resources/deployments/read",
                     "Microsoft.VirtualMachineImages/imageTemplates/read",
                     "Microsoft.VirtualMachineImages/imageTemplates/write",
-                    "Microsoft.VirtualMachineImages/imageTemplates/delete"
+                    "Microsoft.VirtualMachineImages/imageTemplates/delete",
+                    "Microsoft.Resources/deployments/validate/action",
+                    "Microsoft.ManagedIdentity/userAssignedIdentities/read",
+                    "Microsoft.Storage/storageAccounts/read",
+                    "Microsoft.VirtualMachineImages/imageTemplates/write",
+                    "Microsoft.ManagedIdentity/userAssignedIdentities/assign/action",
+                    "Microsoft.VirtualMachineImages/imageTemplates/Run/action"
                 ],
                 "notActions": [],
                 "dataActions": [],

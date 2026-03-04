@@ -1,8 +1,6 @@
 <!-- prettier-ignore -->
 <div align="center">
 
-<img src="image.png" alt="" align="center" height="64" />
-
 # Azure Image Builder for Dev Box
 
 [![Bicep](https://img.shields.io/badge/Bicep-IaC-0078D4?style=flat-square&logo=microsoftazure&logoColor=white)](https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview)
