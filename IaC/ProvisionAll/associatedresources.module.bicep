@@ -34,7 +34,7 @@ param appsContainerName string = 'apps'
 param prepopulateStorageWithExampleScripts bool = true
 
 @description('Whether to disable public network access on the storage account. When true, the storage account is only accessible via private endpoints.')
-param disablePublicNetworkAccess bool = true
+param disablePublicNetworkAccess bool = false
 
 @description('The Azure CLI version to use for the deploymentScripts resource')
 param azCliVersion string = '2.75.0'
