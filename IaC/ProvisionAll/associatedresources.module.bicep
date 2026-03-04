@@ -56,6 +56,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' = {
     minimumTlsVersion: 'TLS1_2'
     allowSharedKeyAccess: false
     publicNetworkAccess: disablePublicNetworkAccess ? 'Disabled' : 'Enabled'
+    allowBlobPublicAccess: false
   }
 }
 

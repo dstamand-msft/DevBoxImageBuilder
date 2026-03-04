@@ -20,6 +20,9 @@ param bastionSkuName string = 'Basic'
 @description('Whether to deploy an Azure Bastion host. When false, the Bastion host, its NSG, and the AzureBastionSubnet are not created.')
 param deployBastion bool = true
 
+// Well-known object ID of the DevOpsInfrastructure first-party service principal
+var devOpsInfrastructurePrincipalId = 'd5733575-3be0-4784-a681-f55fb5f179ac'
+
 var vmImageBuilderSubnetAddressPrefix = '10.0.0.0/28'
 var aciSubnetAddressPrefix = '10.0.0.16/28'
 var adoManagedPoolSubnetAddressPrefix = '10.0.0.32/28'
@@ -39,6 +42,20 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.2' = {
     name: virtualNetworkName
     location: location
     tags: tags
+    // Grant DevOpsInfrastructure SP the permissions required for ADO Managed Pools
+    // see https://learn.microsoft.com/en-us/azure/devops/managed-devops-pools/configure-networking?view=azure-devops&tabs=azure-portal#agents-injected-into-existing-virtual-network
+    roleAssignments: [
+      {
+        principalId: devOpsInfrastructurePrincipalId
+        roleDefinitionIdOrName: 'Network Contributor'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: devOpsInfrastructurePrincipalId
+        roleDefinitionIdOrName: 'Reader'
+        principalType: 'ServicePrincipal'
+      }
+    ]
   }
 }
 
@@ -152,15 +169,19 @@ module nsgImageBuilder 'br/public:avm/res/network/network-security-group:0.5.2' 
           sourcePortRange: '*'
           destinationPortRange: '3389'
           // Developer SKU Bastion connects from the Azure platform IP (168.63.129.16), not the Bastion subnet
-          sourceAddressPrefixes: !deployBastion ? [
-            devboxManagementSubnetAddressPrefix
-          ] : bastionSkuName == 'Developer' ? [
-            devboxManagementSubnetAddressPrefix
-            '168.63.129.16/32'
-          ] : [
-            devboxManagementSubnetAddressPrefix
-            azureBastionSubnetAddressPrefix
-          ]
+          sourceAddressPrefixes: !deployBastion
+            ? [
+                devboxManagementSubnetAddressPrefix
+              ]
+            : bastionSkuName == 'Developer'
+                ? [
+                    devboxManagementSubnetAddressPrefix
+                    '168.63.129.16/32'
+                  ]
+                : [
+                    devboxManagementSubnetAddressPrefix
+                    azureBastionSubnetAddressPrefix
+                  ]
           destinationAddressPrefix: vmImageBuilderSubnetAddressPrefix
           access: 'Allow'
           priority: 201
@@ -366,6 +387,14 @@ resource adoManagedPoolSubnet 'Microsoft.Network/virtualNetworks/subnets@2025-05
     natGateway: {
       id: natGatewayADOManagedPool.outputs.resourceId
     }
+    delegations: [
+      {
+        name: 'adoManagedPoolSubnetDelegation'
+        properties: {
+          serviceName: 'Microsoft.DevOpsInfrastructure/pools'
+        }
+      }
+    ]
   }
   dependsOn: [
     aciSubnet
@@ -402,9 +431,11 @@ module bastionHost 'br/public:avm/res/network/bastion-host:0.8.2' = if (deployBa
     location: location
     tags: tags
     virtualNetworkResourceId: virtualNetwork.outputs.resourceId
-    publicIPAddressObject: bastionSkuName != 'Developer' ? {
-      name: 'pip-bastion'
-    } : null
+    publicIPAddressObject: bastionSkuName != 'Developer'
+      ? {
+          name: 'pip-bastion'
+        }
+      : null
     skuName: bastionSkuName
   }
   dependsOn: [
@@ -464,7 +495,7 @@ module peAzureStorage 'br/public:avm/res/network/private-endpoint:0.11.1' = {
 
 module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.0' = {
   params: {
-#disable-next-line no-hardcoded-env-urls
+    #disable-next-line no-hardcoded-env-urls
     name: 'privatelink.blob.core.windows.net'
     virtualNetworkLinks: [
       {
