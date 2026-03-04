@@ -112,7 +112,7 @@ var usePrivateNetworking = !empty(subnetId) || !empty(virtualNetworkName)
 var provisionNetworking = empty(subnetId) && !empty(virtualNetworkName)
 
 // Disable public network access on the storage account when private networking is used and example scripts are not pre-populated
-var disableStoragePublicAccess = usePrivateNetworking && !prepopulateStorageWithExampleScripts
+var disableStoragePublicAccess = (usePrivateNetworking || provisionNetworking) && !prepopulateStorageWithExampleScripts
 
 // When subnetId is provided (BYOV), use the provided parameters; otherwise, use the networking module outputs
 var effectiveSubnetId = !empty(subnetId) ? subnetId : (provisionNetworking ? networking!.outputs.vmBuilderSubnetId : '')
