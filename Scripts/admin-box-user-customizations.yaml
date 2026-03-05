@@ -1,0 +1,82 @@
+$schema: "1.0"
+name: "admin-box-customizations"
+# All tasks under tasks will be executed as LocalSystem during the provisioning stage of the Dev Box
+tasks:
+  - name: ~/winget
+    description: Install Azure CLI
+    parameters:
+      package: Microsoft.AzureCLI
+  - name: ~/winget
+    description: Install Azure Storage Explorer
+    parameters:
+      package: Microsoft.Azure.StorageExplorer      
+  - name: ~/winget
+    description: Install VSCode Stable
+    parameters:
+      package: Microsoft.VisualStudioCode
+  # replace the placeholder values in the parameters of the git-clone task with actual values to clone your repository during provisioning
+  - name: git-clone
+    description: Clone sources
+    parameters:
+      repositoryUrl: https://dev.azure.com/my-ad-org/my-project/_git/git-repo-name
+      directory: C:\sources
+      pat: '{{ado://my-ado-org}}'
+# All tasks under userTasks section will be executed as user after user’s first login to the Dev Box
+userTasks:
+  # next 3 tasks are optional, but highly recommended for a better terminal experience with Oh-My-Posh, Posh-Git and Terminal-Icons
+  - name: ~/winget
+    description: Install Oh-My-Posh
+    parameters:
+      package: JanDeDobbeleer.OhMyPosh
+  - name: ~/powershell
+    description: Install PowerShell modules
+    parameters:
+      command: |
+        # current implementation of ~/powershell uses PowerShell 5.1 instead of 7
+        $pwsh7 = "C:\Program Files\PowerShell\7\pwsh.exe"
+        & "$pwsh7" -command "Install-Module posh-git -Scope CurrentUser -Force"
+        & "$pwsh7" -command "Install-Module Terminal-Icons -Scope CurrentUser -Force"
+        
+        # You must be using one of the fonts provided by Nerd Fonts for this module to work as these fonts include tons of custom glyphs/icons that are referenced by their unicode number.
+        # see https://github.com/devblackops/Terminal-Icons and https://github.com/ryanoasis/nerd-fonts
+        $nerdfonts_url = "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest"
+        $nerdfontsItems = Invoke-RestMethod -Method Get -Uri $nerdfonts_url
+        $0xprotoArtifact = $nerdfontsItems | Foreach-Object { $item = $_; $item.assets | Where-Object { $_.name -like "*0xProto.zip"} | Select-Object name, browser_download_url }
+        Invoke-WebRequest -Uri $0xprotoArtifact.browser_download_url -OutFile $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name)
+        Expand-Archive -Path $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name) -DestinationPath "$Env:USERPROFILE\Downloads\0xProto" -Force
+        # Install the 0xProto Nerd Font but requires a reboot
+        #& "$pwsh7" -command "Start-Process -FilePath `"$pwsh7`" -ArgumentList '-command `"Move-Item -Path `"$Env:USERPROFILE\Downloads\0xProto\*.ttf`" -Destination `"C:\Windows\Fonts`" -Force`"' -Verb RunAs -Wait"
+        # TODO automate the font in the Windows Terminal profile:
+        # "font": 
+        #   {
+        #     "face": "0xProto Nerd Font Mono"
+        #   }
+        Remove-Item -Path $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name)
+        Remove-Item -Path $(Join-Path "$Env:USERPROFILE\Downloads\0xProto") -Force -Recurse
+  - name: ~/powershell
+    description: PowerShell Profile
+    parameters:
+      command: |
+        $PsProfilePath = Join-Path "$Env:USERPROFILE\Documents\PowerShell" "Microsoft.PowerShell_profile.ps1"
+        if (!(Test-Path -Path $PsProfilePath)) {
+          New-Item -ItemType File -Path $PsProfilePath -Force
+        }
+
+        $content = "[console]::InputEncoding = [console]::OutputEncoding = New-Object System.Text.UTF8Encoding`n"
+        $content += "# Terminal-Icons`nImport-Module -Name Terminal-Icons`n"
+        $content += "# Git-Posh`nImport-Module posh-git`n"
+        $content += "# On-My-Posh`noh-my-posh init pwsh --config `"$(Join-Path $env:POSH_THEMES_PATH "jandedobbeleer.omp.json")`" | Invoke-Expression`n"
+        $content += "# PS-ReadLine`nSet-PSReadLineOption -PredictionSource HistoryAndPlugin`nSet-PSReadLineOption -PredictionViewStyle ListView`n"
+
+        $content | Out-File -FilePath $PsProfilePath -Encoding utf8 -Force
+  - name: ~/powershell
+    description: Install VSCode extensions
+    parameters:
+      command: |
+        $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+        code --install-extension humao.rest-client
+        code --install-extension ms-azuretools.vscode-bicep
+        code --install-extension devcenter.ms-devbox
+        code --install-extension redhat.vscode-xml
+        code --install-extension redhat.vscode-yaml
+        code --install-extension ms-azure-devops.azure-pipelines
