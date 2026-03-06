@@ -42,17 +42,17 @@ userTasks:
         $nerdfonts_url = "https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest"
         $nerdfontsItems = Invoke-RestMethod -Method Get -Uri $nerdfonts_url
         $0xprotoArtifact = $nerdfontsItems | Foreach-Object { $item = $_; $item.assets | Where-Object { $_.name -like "*0xProto.zip"} | Select-Object name, browser_download_url }
-        Invoke-WebRequest -Uri $0xprotoArtifact.browser_download_url -OutFile $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name)
-        Expand-Archive -Path $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name) -DestinationPath "$Env:USERPROFILE\Downloads\0xProto" -Force
-        # Install the 0xProto Nerd Font but requires a reboot
-        #& "$pwsh7" -command "Start-Process -FilePath `"$pwsh7`" -ArgumentList '-command `"Move-Item -Path `"$Env:USERPROFILE\Downloads\0xProto\*.ttf`" -Destination `"C:\Windows\Fonts`" -Force`"' -Verb RunAs -Wait"
-        # TODO automate the font in the Windows Terminal profile:
-        # "font": 
-        #   {
-        #     "face": "0xProto Nerd Font Mono"
-        #   }
-        Remove-Item -Path $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name)
-        Remove-Item -Path $(Join-Path "$Env:USERPROFILE\Downloads\0xProto") -Force -Recurse
+        $fontFolder = $(Join-Path "$Env:USERPROFILE\Downloads" $0xprotoArtifact.name)
+        Invoke-WebRequest -Uri $0xprotoArtifact.browser_download_url -OutFile $fontFolder
+        Expand-Archive -Path $fontFolder -DestinationPath "$Env:USERPROFILE\Downloads\0xProto" -Force
+
+        # Install the 0xProto Nerd Font
+        $userFontDir = $(Join-Path "$env:LOCALAPPDATA" "Microsoft\Windows\Fonts")
+        Get-ChildItem $fontFolder -Include *.ttf, *.otf -Recurse | ForEach-Object {
+          Copy-Item $_.FullName -Destination $userFontDir -Force
+          New-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts" -Name $_.BaseName -Value $_.FullName -PropertyType String -Force
+        }
+        Remove-Item -Path $fontFolder
   - name: ~/powershell
     description: PowerShell Profile
     parameters:
@@ -80,3 +80,4 @@ userTasks:
         code --install-extension redhat.vscode-xml
         code --install-extension redhat.vscode-yaml
         code --install-extension ms-azure-devops.azure-pipelines
+        code --install-extension ms-vscode.powershell
