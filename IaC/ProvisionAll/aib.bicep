@@ -160,6 +160,7 @@ module associatedResources 'associatedresources.module.bicep' = {
     userIdentityName: userIdentityName
     prepopulateStorageWithExampleScripts: prepopulateStorageWithExampleScripts
     disablePublicNetworkAccess: disableStoragePublicAccess
+    virtualNetworkName: provisionNetworking ? networking!.outputs.virtualNetworkName : null
   }
 }
 

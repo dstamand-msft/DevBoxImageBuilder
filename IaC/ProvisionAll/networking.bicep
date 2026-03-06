@@ -509,3 +509,4 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.0' = {
 
 output vmBuilderSubnetId string = vmBuilderSubnet.id
 output aciSubnetId string = aciSubnet.id
+output virtualNetworkName string = virtualNetwork.outputs.name

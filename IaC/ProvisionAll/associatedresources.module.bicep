@@ -36,6 +36,9 @@ param prepopulateStorageWithExampleScripts bool = true
 @description('Whether to disable public network access on the storage account. When true, the storage account is only accessible via private endpoints.')
 param disablePublicNetworkAccess bool = false
 
+@description('The name of the virtual network to use for the image builder VM. When specified, the XX')
+param virtualNetworkName string?
+
 @description('The Azure CLI version to use for the deploymentScripts resource')
 param azCliVersion string = '2.75.0'
 
@@ -43,6 +46,10 @@ param azCliVersion string = '2.75.0'
 param utcValue string = utcNow()
 
 var rbacRoles = loadJsonContent('../rbacRoleIds.json')
+
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' existing = if (!empty(virtualNetworkName)) {
+  name: virtualNetworkName!
+}
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2025-01-01' = {
   name: storageAccountName
@@ -116,6 +123,26 @@ resource azureImageBuilderInjectandDistributeRoleDef 'Microsoft.Authorization/ro
   }
 }
 
+resource azureImageBuilderUseVNetRoleDef 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview' = if (!empty(virtualNetworkName)) {
+  name: guid(subscription().id, resourceGroup().id, 'azureImageBuilderUseVNetCustomRoleRoleDef')
+  properties: {
+    roleName: 'Custom Role Use and Deploy VM into a VNet'
+    description: 'Allows an identity to use and deploy a VM into a Virtual Network.'
+    type: 'customRole'
+    permissions: [
+      {
+        actions: [
+          'Microsoft.Network/virtualNetworks/read'
+          'Microsoft.Network/virtualNetworks/subnets/join/action'
+        ]
+      }
+    ]
+    assignableScopes: [
+      resourceGroup().id
+    ]
+  }
+}
+
 resource storageBlobDataReaderRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (prepopulateStorageWithExampleScripts) {
   name: guid(storageAccount.id, userImgBuilderIdentity.id, 'Storage Blob Data Contributor')
   scope: storageAccount
@@ -152,6 +179,16 @@ resource customRoleAIBImageDistributionUserImgBuilderIdentityRBAC 'Microsoft.Aut
   scope: galleryImage
   properties: {
     roleDefinitionId: azureImageBuilderInjectandDistributeRoleDef.id
+    principalId: userImgBuilderIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource customRoleUseVnetRBACAIBIdentity 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(virtualNetworkName)) {
+  name: guid(storageAccount.id, userImgBuilderIdentity.id, 'Custom Role Use and Deploy VM into a VNet')
+  scope: virtualNetwork
+  properties: {
+    roleDefinitionId: azureImageBuilderUseVNetRoleDef.id
     principalId: userImgBuilderIdentity.properties.principalId
     principalType: 'ServicePrincipal'
   }
